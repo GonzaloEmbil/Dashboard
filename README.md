@@ -2,6 +2,8 @@
 
 ## Goals per game
 
-![Goals per game](Visuals/mapa1.png)
+![1](Visuals/mapa6.png)
 
-![Goals per game](Visuals/mapa2.png)
+![2](Visuals/mapa1.png)
+
+![3](Visuals/mapa2.png)
