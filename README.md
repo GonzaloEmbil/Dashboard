@@ -1,6 +1,6 @@
 # YCombinator_startups
 
-## Goals per game
+## Working on it
 
 ![1](Visuals/mapa6.png)
 
