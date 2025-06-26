@@ -22,6 +22,10 @@ seleccion = st.multiselect(
     default=list(columnas_lineas.keys())
 )
 
+# Filtrar columnas seleccionadas para el CSV
+columnas_csv = ['Periodo'] + [columnas_lineas[grupo][0] for grupo in seleccion]
+df_filtrado = df[columnas_csv]
+
 # Crear gráfico
 fig, ax = plt.subplots(figsize=(15, 10), facecolor='white')
 ax.set_facecolor('#efe9e6')
@@ -51,7 +55,7 @@ else:
 # Mostrar gráfico
 st.pyplot(fig)
 
-# Botón para descargar imagen
+# Descargar gráfico como PNG
 buf = io.BytesIO()
 fig.savefig(buf, format="png")
 st.download_button(
@@ -59,4 +63,13 @@ st.download_button(
     data=buf.getvalue(),
     file_name="renta_media.png",
     mime="image/png"
+)
+
+# Descargar datos como CSV
+csv = df_filtrado.to_csv(index=False, sep=';').encode('utf-8-sig')
+st.download_button(
+    label="📄 Descargar datos como CSV",
+    data=csv,
+    file_name='datos_renta_media.csv',
+    mime='text/csv'
 )
