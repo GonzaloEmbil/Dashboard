@@ -2,12 +2,12 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-# Configuración general del dashboard
+# Configurar la página
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
 # Título principal
 st.title("📊 Evolución de la Renta Anual Neta Media")
-st.markdown("Selecciona los grupos de edad y exporta los datos si lo deseas.")
+st.markdown("Selecciona los grupos de edad que deseas visualizar y descarga los datos si lo necesitas.")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
@@ -21,7 +21,7 @@ columnas_lineas = {
     '16-29': ('RentaAnualNetaMedia16_29', 'gray')
 }
 
-# Filtros en sidebar
+# Sidebar con filtros
 with st.sidebar:
     st.header("⚙️ Filtros")
     seleccion = st.multiselect(
@@ -29,16 +29,16 @@ with st.sidebar:
         options=list(columnas_lineas.keys()),
         default=list(columnas_lineas.keys())
     )
-    
     st.markdown("---")
-    st.write("Puedes descargar los datos o el gráfico al final.")
+    st.write("Puedes descargar los datos en CSV al final.")
 
-# Filtrar columnas para CSV
+# Filtrar columnas seleccionadas
 columnas_csv = ['Periodo'] + [columnas_lineas[grupo][0] for grupo in seleccion]
 df_filtrado = df[columnas_csv]
 
-# Crear gráfico interactivo con Plotly
+# Crear gráfico interactivo
 fig = go.Figure()
+
 for grupo in seleccion:
     col, color = columnas_lineas[grupo]
     fig.add_trace(go.Scatter(
@@ -46,10 +46,14 @@ for grupo in seleccion:
         y=df[col],
         mode='lines+markers',
         name=grupo,
-        line=dict(color=color, width=2)
+        line=dict(color=color, width=2),
+        hovertemplate=
+            f"<b>{grupo}</b><br>" +
+            "Año: %{x}<br>" +
+            "Renta: %{y:,.0f} €<extra></extra>"
     ))
 
-# Personalización del gráfico
+# Configurar diseño del gráfico
 fig.update_layout(
     title="📈 Renta Anual Neta Media por Grupo de Edad",
     xaxis_title="Año",
@@ -57,17 +61,20 @@ fig.update_layout(
     template="simple_white",
     plot_bgcolor='#fafafa',
     paper_bgcolor='#ffffff',
-    font=dict(family="Segoe UI", size=14),
+    font=dict(family="Segoe UI", size=14, color="black"),
     legend=dict(orientation="h", y=-0.2),
     hovermode='x unified',
     height=550
 )
-fig.update_yaxes(range=[8000, 18000])
+
+# Ejes en color negro y con grilla clara
+fig.update_xaxes(color="black", showgrid=True, gridcolor="lightgray")
+fig.update_yaxes(color="black", showgrid=True, gridcolor="lightgray", range=[8000, 18000])
 
 # Mostrar gráfico
 st.plotly_chart(fig, use_container_width=True)
 
-# Botones de descarga organizados en columnas
+# Botones de descarga
 col1, col2 = st.columns(2)
 
 with col1:
@@ -80,4 +87,4 @@ with col1:
     )
 
 with col2:
-    st.markdown("💡 Puedes hacer clic derecho en el gráfico → *Guardar imagen como...* para exportarlo en PNG.")
+    st.markdown("💡 Puedes hacer clic derecho sobre el gráfico y elegir *'Guardar imagen como...'* para exportarlo como PNG.")
