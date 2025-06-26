@@ -196,9 +196,7 @@ st.download_button(
 )
 
 # --------- MAPA COROPLÉTICO FUNCIONAL ---------
-import plotly.express as px
-import plotly.io as pio
-import json
+import plotly.graph_objects as go
 
 st.markdown("---")
 st.subheader("🗺️ Mapa Coroplético de la Renta por Comunidad Autónoma")
@@ -220,7 +218,7 @@ año_seleccionado = st.selectbox(
     key="año_mapa"
 )
 
-# Diccionario de columnas con nombres normalizados
+# Columnas
 columnas_euro = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
@@ -242,28 +240,25 @@ columnas_euro = {
     "Ceuta": "RentaAnualNetaMediaCeuta",
     "Melilla": "RentaAnualNetaMediaMelilla"
 }
-
 columnas_pct = {k: v + "Base2010" for k, v in columnas_euro.items()}
 columnas_usar = columnas_euro if tipo_valor == "Valores absolutos (€)" else columnas_pct
 titulo_color = "Renta (€)" if tipo_valor == "Valores absolutos (€)" else "Índice (base 2010 = 100)"
 formato_hover = ".0f" if tipo_valor == "Valores absolutos (€)" else ".1f"
 
-# Filtrar datos por año seleccionado
+# Datos por año
 df_año = df[df["Periodo"] == año_seleccionado].copy()
 
-# Crear datos para el mapa
+# Datos para mapa
 datos_mapa = pd.DataFrame({
     "Comunidad Autónoma": list(columnas_usar.keys()),
-    "Valor": [df_año[col].values[0] if col in df_año.columns and not df_año[col].isnull().all() 
-             else None for col in columnas_usar.values()]
+    "Valor": [df_año[col].values[0] if col in df_año.columns and not df_año[col].isnull().all() else None for col in columnas_usar.values()]
 }).dropna(subset=['Valor'])
 
-# Verificar si hay datos
 if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# GEOJSON CORREGIDO Y VERIFICADO
+# GEOJSON con puntos y polígonos
 geojson_data = {
     "type": "FeatureCollection",
     "features": [
@@ -289,63 +284,69 @@ geojson_data = {
     ]
 }
 
-# SOLUCIÓN DEFINITIVA CON PLOTLY EXPRESS
-try:
-    # Crear el mapa con plotly express
-    fig = px.choropleth(
-        datos_mapa,
-        geojson=geojson_data,
-        locations='Comunidad Autónoma',
-        color='Valor',
-        featureidkey='properties.name',
-        color_continuous_scale='Viridis',
-        range_color=(datos_mapa['Valor'].min(), datos_mapa['Valor'].max()),
-        labels={'Valor': titulo_color},
-        title=f"Renta Anual Neta Media - {año_seleccionado}"
-    )
-    
-    # Configuración crítica del mapa
-    fig.update_geos(
-        visible=False,
-        center=dict(lon=-4, lat=40),
-        projection_type='mercator',
-        projection_scale=5.5,
-        lonaxis_range=[-10, 4.5],
-        lataxis_range=[35, 44],
-        fitbounds="locations"
-    )
-    
-    # Configuración del layout
-    fig.update_layout(
-        plot_bgcolor='#0e1117',
-        paper_bgcolor='#0e1117',
-        font=dict(color="white"),
-        margin=dict(l=0, r=0, t=50, b=0),
-        height=650,
-        coloraxis_colorbar=dict(
-            title=titulo_color,
-            tickfont=dict(color="white"),
-            title_font=dict(color="white")
-        )
-    )
-    
-    # Configurar hovertemplate
-    fig.update_traces(
-        hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
-    )
-    
-    # Forzar la vista inicial de España
-    fig.update_geos(
-        lataxis_range=[36, 44],  # Ajuste fino de latitud
-        lonaxis_range=[-10, 5]    # Ajuste fino de longitud
-    )
-    
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+# Función para convertir Point a pequeño Polygon
+def point_to_square(lon, lat, size=0.25):
+    return [
+        [lon - size, lat - size],
+        [lon + size, lat - size],
+        [lon + size, lat + size],
+        [lon - size, lat + size],
+        [lon - size, lat - size]
+    ]
 
-except Exception as e:
-    st.error(f"Error creando el mapa: {str(e)}")
-    st.error("Por favor verifique los nombres de las comunidades en los datos y en el GeoJSON")
-    
-    # Mostrar datos para diagnóstico
-    st.write("Datos del mapa:", datos_mapa)
-    st.write("Nombres en GeoJSON:", [feature['properties']['name'] for feature in geojson_data['features']])
+# Aplicar conversión a features tipo Point
+for feature in geojson_data['features']:
+    if feature['geometry']['type'] == "Point":
+        lon, lat = feature['geometry']['coordinates']
+        feature['geometry']['type'] = "Polygon"
+        feature['geometry']['coordinates'] = [point_to_square(lon, lat)]
+
+# Crear figura del mapa
+min_val = datos_mapa['Valor'].min()
+max_val = datos_mapa['Valor'].max()
+rango = [min_val - 0.05*(max_val-min_val), max_val + 0.05*(max_val-min_val)]
+
+fig = go.Figure(go.Choropleth(
+    geojson=geojson_data,
+    locations=datos_mapa['Comunidad Autónoma'],
+    z=datos_mapa['Valor'],
+    featureidkey="properties.name",
+    colorscale='Viridis',
+    marker_line_width=0.5,
+    marker_line_color='white',
+    zmin=rango[0],
+    zmax=rango[1],
+    hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>",
+    colorbar=dict(title=titulo_color, tickfont=dict(color="white"), titlefont=dict(color="white"))
+))
+
+fig.update_geos(
+    fitbounds="locations",
+    visible=False,
+    resolution=50,
+    center=dict(lat=40.0, lon=-4.0),
+    projection_scale=5.5,
+    showcountries=False,
+    bgcolor='rgba(0,0,0,0)'
+)
+
+fig.update_layout(
+    title=dict(text=f"Renta Anual Neta Media - {año_seleccionado}", font=dict(color="white", size=20)),
+    plot_bgcolor='#0e1117',
+    paper_bgcolor='#0e1117',
+    font=dict(color="white", family="Arial"),
+    margin=dict(l=0, r=0, t=60, b=0),
+    height=650
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# Botón descarga
+csv_map = datos_mapa.copy()
+csv_map.insert(0, "Año", año_seleccionado)
+st.download_button(
+    label="⬇️ Descargar datos completos",
+    data=csv_map.to_csv(index=False).encode("utf-8"),
+    file_name="renta_comunidades.csv",
+    mime="text/csv"
+)
