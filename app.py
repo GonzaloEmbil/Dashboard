@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
-# Estilos para texto negro global
+# Estilos globales para texto negro
 st.markdown("""
     <style>
     body, label, .css-1aumxhk, .stText, .stSelectbox, .stMultiSelect, .stMarkdown {
@@ -28,7 +28,7 @@ columnas_lineas = {
     '16-29': ('RentaAnualNetaMedia16_29', 'gray')
 }
 
-# Menú desplegable con selección múltiple
+# Menú desplegable de selección múltiple
 seleccion = st.multiselect(
     "Selecciona los grupos de edad:",
     options=list(columnas_lineas.keys()),
@@ -54,9 +54,12 @@ for grupo in seleccion:
         hovertemplate=f"<b>{grupo}</b><br>Año: %{{x}}<br>Renta: %{{y:,.0f}} €<extra></extra>"
     ))
 
-# Configurar estilo del gráfico
+# Configurar el layout del gráfico
 fig.update_layout(
-    title=dict(text="📈 Renta Anual Neta Media por Grupo de Edad", font=dict(color="black")),
+    title=dict(
+        text="📈 Renta Anual Neta Media por Grupo de Edad",
+        font=dict(color="black")
+    ),
     xaxis=dict(
         title="Año",
         title_font=dict(color="black"),
@@ -72,20 +75,20 @@ fig.update_layout(
         gridcolor="lightgray",
         range=[8000, 18000]
     ),
-    template="simple_white",
+    template="none",  # Forzamos sin tema para aplicar todos los estilos manualmente
     plot_bgcolor='#fafafa',
     paper_bgcolor='#ffffff',
     font=dict(family="Segoe UI", size=14, color="black"),
     legend=dict(
         orientation="h",
         y=-0.2,
-        font=dict(color="black")  # Leyenda en negro
+        font=dict(size=14, color="black")  # ✅ Leyenda en negro
     ),
     hovermode='x unified',
     height=550
 )
 
-# Mostrar gráfico en Streamlit
+# Mostrar el gráfico
 st.plotly_chart(fig, use_container_width=True)
 
 # Botones de descarga
