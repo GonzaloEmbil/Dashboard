@@ -196,7 +196,9 @@ st.download_button(
 )
 
 # --------- MAPA COROPLÉTICO FUNCIONAL ---------
-import plotly.graph_objects as go
+import plotly.express as px
+import plotly.io as pio
+import json
 
 st.markdown("---")
 st.subheader("🗺️ Mapa Coroplético de la Renta por Comunidad Autónoma")
@@ -261,7 +263,7 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# GEOJSON CON NOMBRES ESTANDARIZADOS
+# GEOJSON CORREGIDO Y VERIFICADO
 geojson_data = {
     "type": "FeatureCollection",
     "features": [
@@ -287,89 +289,63 @@ geojson_data = {
     ]
 }
 
-# SOLUCIÓN CONFIABLE - CORRESPONDENCIA EXACTA DE NOMBRES
-# Asegurar que los nombres en datos_mapa coincidan exactamente con el GeoJSON
-nombre_mapping = {
-    "C. Valenciana": "Comunidad Valenciana"
-}
-datos_mapa['Comunidad Autónoma'] = datos_mapa['Comunidad Autónoma'].replace(nombre_mapping)
-
+# SOLUCIÓN DEFINITIVA CON PLOTLY EXPRESS
 try:
-    # Calcular rango de colores
-    min_val = datos_mapa['Valor'].min()
-    max_val = datos_mapa['Valor'].max()
-    rango = [min_val - 0.05*(max_val-min_val), max_val + 0.05*(max_val-min_val)]
-    
-    # Crear figura
-    fig = go.Figure(go.Choropleth(
+    # Crear el mapa con plotly express
+    fig = px.choropleth(
+        datos_mapa,
         geojson=geojson_data,
-        locations=datos_mapa['Comunidad Autónoma'],
-        z=datos_mapa['Valor'],
-        featureidkey="properties.name",
-        colorscale='Viridis',  # Paleta más efectiva
-        marker_line_width=0.5,
-        marker_line_color='white',
-        colorbar=dict(
+        locations='Comunidad Autónoma',
+        color='Valor',
+        featureidkey='properties.name',
+        color_continuous_scale='Viridis',
+        range_color=(datos_mapa['Valor'].min(), datos_mapa['Valor'].max()),
+        labels={'Valor': titulo_color},
+        title=f"Renta Anual Neta Media - {año_seleccionado}"
+    )
+    
+    # Configuración crítica del mapa
+    fig.update_geos(
+        visible=False,
+        center=dict(lon=-4, lat=40),
+        projection_type='mercator',
+        projection_scale=5.5,
+        lonaxis_range=[-10, 4.5],
+        lataxis_range=[35, 44],
+        fitbounds="locations"
+    )
+    
+    # Configuración del layout
+    fig.update_layout(
+        plot_bgcolor='#0e1117',
+        paper_bgcolor='#0e1117',
+        font=dict(color="white"),
+        margin=dict(l=0, r=0, t=50, b=0),
+        height=650,
+        coloraxis_colorbar=dict(
             title=titulo_color,
             tickfont=dict(color="white"),
             title_font=dict(color="white")
-        ),
-        zmin=rango[0],
-        zmax=rango[1],
-        hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
-    ))
-    
-    # Configuración del mapa
-    fig.update_geos(
-        fitbounds="locations",
-        visible=False,
-        center=dict(lat=40.0, lon=-4.0),
-        projection_scale=5.5,
-        showcountries=True,
-        countrycolor="white",
-        showsubunits=True,
-        subunitcolor="rgba(255,255,255,0.3)",
-        bgcolor='rgba(0,0,0,0)',
-        resolution=50  # Más detalle
-    )
-    
-    fig.update_layout(
-        title=dict(
-            text=f"Renta Anual Neta Media - {año_seleccionado}",
-            font=dict(color="white", size=20)
-        ),
-        plot_bgcolor='#0e1117',
-        paper_bgcolor='#0e1117',
-        font=dict(color="white", family="Arial"),
-        margin=dict(l=0, r=0, t=60, b=0),
-        height=650,
-        geo=dict(  # Ajuste específico para la vista de España
-            lonaxis_range=[-10, 5],
-            lataxis_range=[35, 44]
         )
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    # Configurar hovertemplate
+    fig.update_traces(
+        hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
+    )
+    
+    # Forzar la vista inicial de España
+    fig.update_geos(
+        lataxis_range=[36, 44],  # Ajuste fino de latitud
+        lonaxis_range=[-10, 5]    # Ajuste fino de longitud
+    )
+    
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 except Exception as e:
     st.error(f"Error creando el mapa: {str(e)}")
-    # Solo mostramos el error sin tablas ni otros gráficos
-
-# Botón de descarga
-csv_map = datos_mapa.copy()
-csv_map.insert(0, "Año", año_seleccionado)
-st.download_button(
-    label="⬇️ Descargar datos completos",
-    data=csv_map.to_csv(index=False).encode("utf-8"),
-    file_name="renta_comunidades.csv",
-    mime="text/csv"
-)
-
-# Notas explicativas
-st.markdown("""
-**Notas:**
-- Comunidades pequeñas se muestran como puntos para mejor visualización
-- Las zonas más rojas indican valores más altos
-- El mapa muestra la distribución geográfica de la renta neta anual media
-- Si el mapa no se ve correctamente, revise la correspondencia de nombres en la sección de verificación
-""")
+    st.error("Por favor verifique los nombres de las comunidades en los datos y en el GeoJSON")
+    
+    # Mostrar datos para diagnóstico
+    st.write("Datos del mapa:", datos_mapa)
+    st.write("Nombres en GeoJSON:", [feature['properties']['name'] for feature in geojson_data['features']])
