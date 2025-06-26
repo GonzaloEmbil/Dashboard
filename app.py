@@ -1,46 +1,23 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from streamlit_tags import st_tags
 
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
-# Estilo general y chips por grupo
+# Estilos para texto negro
 st.markdown("""
     <style>
-    body, .stTextInput label, .stSelectbox label, .stMultiSelect label, .stDownloadButton label {
+    body, label, .css-1aumxhk {  /* Ajusta selector para etiquetas de input */
         color: black !important;
-    }
-    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("Total")) {
-        background-color: green !important;
-        color: white !important;
-    }
-    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("65 o más")) {
-        background-color: purple !important;
-        color: white !important;
-    }
-    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("45-64")) {
-        background-color: red !important;
-        color: white !important;
-    }
-    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("30-44")) {
-        background-color: blue !important;
-        color: white !important;
-    }
-    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("16-29")) {
-        background-color: gray !important;
-        color: white !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Título
-st.title("📊 Evolución de la Renta Anual Neta Media")
+st.title("📈 Renta Anual Neta Media por Grupo de Edad")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
 
-# Diccionario de columnas
 columnas_lineas = {
     'Total': ('RentaAnualNetaMedia', 'green'),
     '65 o más': ('RentaAnualNetaMedia65', 'purple'),
@@ -49,23 +26,21 @@ columnas_lineas = {
     '16-29': ('RentaAnualNetaMedia16_29', 'gray')
 }
 
-# Selector tipo chips con colores por grupo
-st.markdown("### 🎯 Filtra por grupo de edad")
-seleccion = st_tags(
-    label='Selecciona grupos de edad:',
-    text='Presiona Enter para seleccionar',
-    value=list(columnas_lineas.keys()),
-    suggestions=list(columnas_lineas.keys()),
-    maxtags=5,
-    key='grupo_edad'
+# Menú desplegable clásico con selección múltiple y búsqueda
+seleccion = st.multiselect(
+    "Selecciona los grupos de edad:",
+    options=list(columnas_lineas.keys()),
+    default=list(columnas_lineas.keys()),
+    help="Puedes buscar y seleccionar uno o más grupos"
 )
 
-# Filtrar columnas
+# Filtrar columnas para descargar y graficar
 columnas_csv = ['Periodo'] + [columnas_lineas[grupo][0] for grupo in seleccion]
 df_filtrado = df[columnas_csv]
 
-# Crear gráfico
+# Crear gráfico interactivo con plotly
 fig = go.Figure()
+
 for grupo in seleccion:
     col, color = columnas_lineas[grupo]
     fig.add_trace(go.Scatter(
@@ -74,13 +49,9 @@ for grupo in seleccion:
         mode='lines+markers',
         name=grupo,
         line=dict(color=color, width=2),
-        hovertemplate=
-            f"<b>{grupo}</b><br>" +
-            "Año: %{x}<br>" +
-            "Renta: %{y:,.0f} €<extra></extra>"
+        hovertemplate=f"<b>{grupo}</b><br>Año: %{x}<br>Renta: %{y:,.0f} €<extra></extra>"
     ))
 
-# Configurar gráfico
 fig.update_layout(
     title=dict(text="📈 Renta Anual Neta Media por Grupo de Edad", font=dict(color="black")),
     xaxis=dict(title="Año", title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray"),
