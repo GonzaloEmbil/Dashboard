@@ -1,27 +1,46 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+from streamlit_tags import st_tags
 
-# Configurar la página
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
-# Estilo personalizado para forzar texto negro en Streamlit
+# Estilo general y chips por grupo
 st.markdown("""
     <style>
     body, .stTextInput label, .stSelectbox label, .stMultiSelect label, .stDownloadButton label {
         color: black !important;
     }
+    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("Total")) {
+        background-color: green !important;
+        color: white !important;
+    }
+    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("65 o más")) {
+        background-color: purple !important;
+        color: white !important;
+    }
+    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("45-64")) {
+        background-color: red !important;
+        color: white !important;
+    }
+    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("30-44")) {
+        background-color: blue !important;
+        color: white !important;
+    }
+    .stTagsInput div[data-baseweb="tag"] div:has(span:contains("16-29")) {
+        background-color: gray !important;
+        color: white !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Título principal
+# Título
 st.title("📊 Evolución de la Renta Anual Neta Media")
-st.markdown("Selecciona los grupos de edad que deseas visualizar:")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
 
-# Diccionario de columnas disponibles
+# Diccionario de columnas
 columnas_lineas = {
     'Total': ('RentaAnualNetaMedia', 'green'),
     '65 o más': ('RentaAnualNetaMedia65', 'purple'),
@@ -30,20 +49,23 @@ columnas_lineas = {
     '16-29': ('RentaAnualNetaMedia16_29', 'gray')
 }
 
-# Menú desplegable de selección (múltiple)
-seleccion = st.multiselect(
-    "Grupos de edad:",
-    options=list(columnas_lineas.keys()),
-    default=list(columnas_lineas.keys())
+# Selector tipo chips con colores por grupo
+st.markdown("### 🎯 Filtra por grupo de edad")
+seleccion = st_tags(
+    label='Selecciona grupos de edad:',
+    text='Presiona Enter para seleccionar',
+    value=list(columnas_lineas.keys()),
+    suggestions=list(columnas_lineas.keys()),
+    maxtags=5,
+    key='grupo_edad'
 )
 
-# Filtrar columnas seleccionadas
+# Filtrar columnas
 columnas_csv = ['Periodo'] + [columnas_lineas[grupo][0] for grupo in seleccion]
 df_filtrado = df[columnas_csv]
 
-# Crear gráfico interactivo
+# Crear gráfico
 fig = go.Figure()
-
 for grupo in seleccion:
     col, color = columnas_lineas[grupo]
     fig.add_trace(go.Scatter(
@@ -58,29 +80,11 @@ for grupo in seleccion:
             "Renta: %{y:,.0f} €<extra></extra>"
     ))
 
-# Configurar diseño del gráfico
+# Configurar gráfico
 fig.update_layout(
-    title=dict(
-        text="📈 Renta Anual Neta Media por Grupo de Edad",
-        font=dict(color="black")
-    ),
-    xaxis=dict(
-        title="Año",
-        title_font=dict(color="black"),
-        tickfont=dict(color="black"),
-        color="black",
-        showgrid=True,
-        gridcolor="lightgray"
-    ),
-    yaxis=dict(
-        title="Renta (€)",
-        title_font=dict(color="black"),
-        tickfont=dict(color="black"),
-        color="black",
-        showgrid=True,
-        gridcolor="lightgray",
-        range=[8000, 18000]
-    ),
+    title=dict(text="📈 Renta Anual Neta Media por Grupo de Edad", font=dict(color="black")),
+    xaxis=dict(title="Año", title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray"),
+    yaxis=dict(title="Renta (€)", title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray", range=[8000, 18000]),
     template="simple_white",
     plot_bgcolor='#fafafa',
     paper_bgcolor='#ffffff',
@@ -90,20 +94,12 @@ fig.update_layout(
     height=550
 )
 
-# Mostrar gráfico
 st.plotly_chart(fig, use_container_width=True)
 
 # Botones de descarga
 col1, col2 = st.columns(2)
-
 with col1:
     csv = df_filtrado.to_csv(index=False, sep=';').encode('utf-8-sig')
-    st.download_button(
-        label="📄 Descargar datos como CSV",
-        data=csv,
-        file_name='datos_renta_media.csv',
-        mime='text/csv'
-    )
-
+    st.download_button("📄 Descargar datos como CSV", csv, file_name="datos_renta_media.csv", mime="text/csv")
 with col2:
-    st.markdown("💡 Puedes hacer clic derecho sobre el gráfico y elegir *'Guardar imagen como...'* para exportarlo como PNG.")
+    st.markdown("💡 Clic derecho en el gráfico → *Guardar imagen como...*")
