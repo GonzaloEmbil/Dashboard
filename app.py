@@ -209,7 +209,7 @@ tipo_valor = st.selectbox(
     key="vista_mapa"
 )
 
-# Obtener lista de años disponibles
+# Años disponibles
 años_disponibles = sorted(df['Periodo'].unique())
 año_seleccionado = st.selectbox(
     "Selecciona el año:",
@@ -247,8 +247,6 @@ formato_hover = ".0f" if tipo_valor == "Valores absolutos (€)" else ".1f"
 
 # Datos por año
 df_año = df[df["Periodo"] == año_seleccionado].copy()
-
-# Datos para mapa
 datos_mapa = pd.DataFrame({
     "Comunidad Autónoma": list(columnas_usar.keys()),
     "Valor": [df_año[col].values[0] if col in df_año.columns and not df_año[col].isnull().all() else None for col in columnas_usar.values()]
@@ -258,7 +256,7 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# GEOJSON con puntos y polígonos
+# GEOJSON base
 geojson_data = {
     "type": "FeatureCollection",
     "features": [
@@ -284,7 +282,7 @@ geojson_data = {
     ]
 }
 
-# Función para convertir Point a pequeño Polygon
+# Función para convertir Point a Polygon
 def point_to_square(lon, lat, size=0.25):
     return [
         [lon - size, lat - size],
@@ -294,18 +292,19 @@ def point_to_square(lon, lat, size=0.25):
         [lon - size, lat - size]
     ]
 
-# Aplicar conversión a features tipo Point
+# Convertir puntos en polígonos pequeños
 for feature in geojson_data['features']:
     if feature['geometry']['type'] == "Point":
         lon, lat = feature['geometry']['coordinates']
         feature['geometry']['type'] = "Polygon"
         feature['geometry']['coordinates'] = [point_to_square(lon, lat)]
 
-# Crear figura del mapa
+# Rango de colores
 min_val = datos_mapa['Valor'].min()
 max_val = datos_mapa['Valor'].max()
 rango = [min_val - 0.05*(max_val-min_val), max_val + 0.05*(max_val-min_val)]
 
+# Crear figura del mapa
 fig = go.Figure(go.Choropleth(
     geojson=geojson_data,
     locations=datos_mapa['Comunidad Autónoma'],
@@ -317,7 +316,13 @@ fig = go.Figure(go.Choropleth(
     zmin=rango[0],
     zmax=rango[1],
     hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>",
-    colorbar=dict(title=titulo_color, tickfont=dict(color="white"), titlefont=dict(color="white"))
+    colorbar=dict(
+        title=dict(
+            text=titulo_color,
+            font=dict(color="white")
+        ),
+        tickfont=dict(color="white")
+    )
 ))
 
 fig.update_geos(
@@ -341,7 +346,7 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# Botón descarga
+# Botón de descarga
 csv_map = datos_mapa.copy()
 csv_map.insert(0, "Año", año_seleccionado)
 st.download_button(
