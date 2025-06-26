@@ -4,20 +4,22 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
-# Estilos para texto negro
+# Estilos para texto negro global
 st.markdown("""
     <style>
-    body, label, .css-1aumxhk {  /* Ajusta selector para etiquetas de input */
+    body, label, .css-1aumxhk, .stText, .stSelectbox, .stMultiSelect, .stMarkdown {
         color: black !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
+# Título principal
 st.title("📈 Renta Anual Neta Media por Grupo de Edad")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
 
+# Diccionario de columnas y colores por grupo
 columnas_lineas = {
     'Total': ('RentaAnualNetaMedia', 'green'),
     '65 o más': ('RentaAnualNetaMedia65', 'purple'),
@@ -26,7 +28,7 @@ columnas_lineas = {
     '16-29': ('RentaAnualNetaMedia16_29', 'gray')
 }
 
-# Menú desplegable clásico con selección múltiple y búsqueda
+# Menú desplegable con selección múltiple
 seleccion = st.multiselect(
     "Selecciona los grupos de edad:",
     options=list(columnas_lineas.keys()),
@@ -34,11 +36,11 @@ seleccion = st.multiselect(
     help="Puedes buscar y seleccionar uno o más grupos"
 )
 
-# Filtrar columnas para descargar y graficar
+# Filtrar columnas seleccionadas
 columnas_csv = ['Periodo'] + [columnas_lineas[grupo][0] for grupo in seleccion]
 df_filtrado = df[columnas_csv]
 
-# Crear gráfico interactivo con plotly
+# Crear gráfico interactivo con Plotly
 fig = go.Figure()
 
 for grupo in seleccion:
@@ -52,19 +54,38 @@ for grupo in seleccion:
         hovertemplate=f"<b>{grupo}</b><br>Año: %{{x}}<br>Renta: %{{y:,.0f}} €<extra></extra>"
     ))
 
+# Configurar estilo del gráfico
 fig.update_layout(
     title=dict(text="📈 Renta Anual Neta Media por Grupo de Edad", font=dict(color="black")),
-    xaxis=dict(title="Año", title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray"),
-    yaxis=dict(title="Renta (€)", title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray", range=[8000, 18000]),
+    xaxis=dict(
+        title="Año",
+        title_font=dict(color="black"),
+        tickfont=dict(color="black"),
+        showgrid=True,
+        gridcolor="lightgray"
+    ),
+    yaxis=dict(
+        title="Renta (€)",
+        title_font=dict(color="black"),
+        tickfont=dict(color="black"),
+        showgrid=True,
+        gridcolor="lightgray",
+        range=[8000, 18000]
+    ),
     template="simple_white",
     plot_bgcolor='#fafafa',
     paper_bgcolor='#ffffff',
     font=dict(family="Segoe UI", size=14, color="black"),
-    legend=dict(orientation="h", y=-0.2),
+    legend=dict(
+        orientation="h",
+        y=-0.2,
+        font=dict(color="black")  # Leyenda en negro
+    ),
     hovermode='x unified',
     height=550
 )
 
+# Mostrar gráfico en Streamlit
 st.plotly_chart(fig, use_container_width=True)
 
 # Botones de descarga
@@ -73,4 +94,4 @@ with col1:
     csv = df_filtrado.to_csv(index=False, sep=';').encode('utf-8-sig')
     st.download_button("📄 Descargar datos como CSV", csv, file_name="datos_renta_media.csv", mime="text/csv")
 with col2:
-    st.markdown("💡 Clic derecho en el gráfico → *Guardar imagen como...* para exportarlo como PNG.")
+    st.markdown("💡 Clic derecho en el gráfico → *Guardar imagen como...*")
