@@ -282,7 +282,7 @@ geojson_data = {
     ]
 }
 
-# Función para convertir Point a Polygon
+# Convertir puntos en polígonos pequeños
 def point_to_square(lon, lat, size=0.25):
     return [
         [lon - size, lat - size],
@@ -292,19 +292,18 @@ def point_to_square(lon, lat, size=0.25):
         [lon - size, lat - size]
     ]
 
-# Convertir puntos en polígonos pequeños
-for feature in geojson_data['features']:
-    if feature['geometry']['type'] == "Point":
-        lon, lat = feature['geometry']['coordinates']
-        feature['geometry']['type'] = "Polygon"
-        feature['geometry']['coordinates'] = [point_to_square(lon, lat)]
+for feature in geojson_data["features"]:
+    if feature["geometry"]["type"] == "Point":
+        lon, lat = feature["geometry"]["coordinates"]
+        feature["geometry"]["type"] = "Polygon"
+        feature["geometry"]["coordinates"] = [point_to_square(lon, lat)]
 
 # Rango de colores
 min_val = datos_mapa['Valor'].min()
 max_val = datos_mapa['Valor'].max()
-rango = [min_val - 0.05*(max_val-min_val), max_val + 0.05*(max_val-min_val)]
+rango = [min_val - 0.05*(max_val - min_val), max_val + 0.05*(max_val - min_val)]
 
-# Crear figura del mapa
+# Figura
 fig = go.Figure(go.Choropleth(
     geojson=geojson_data,
     locations=datos_mapa['Comunidad Autónoma'],
@@ -317,10 +316,7 @@ fig = go.Figure(go.Choropleth(
     zmax=rango[1],
     hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>",
     colorbar=dict(
-        title=dict(
-            text=titulo_color,
-            font=dict(color="white")
-        ),
+        title=dict(text=titulo_color, font=dict(color="white")),
         tickfont=dict(color="white")
     )
 ))
@@ -328,10 +324,12 @@ fig = go.Figure(go.Choropleth(
 fig.update_geos(
     fitbounds="locations",
     visible=False,
-    resolution=50,
-    center=dict(lat=40.0, lon=-4.0),
-    projection_scale=5.5,
     showcountries=False,
+    showland=False,
+    showocean=False,
+    lakecolor='rgba(0,0,0,0)',
+    landcolor='rgba(0,0,0,0)',
+    oceancolor='rgba(0,0,0,0)',
     bgcolor='rgba(0,0,0,0)'
 )
 
@@ -346,7 +344,7 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# Botón de descarga
+# Botón descarga
 csv_map = datos_mapa.copy()
 csv_map.insert(0, "Año", año_seleccionado)
 st.download_button(
