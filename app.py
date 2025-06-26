@@ -1,14 +1,19 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+from io import BytesIO
 
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
-# Estilo global para texto negro
+# Estilo global en modo oscuro
 st.markdown("""
     <style>
-    body, label, .css-1aumxhk, .stText, .stSelectbox, .stMultiSelect, .stMarkdown {
-        color: black !important;
+    body {
+        background-color: #0e1117;
+        color: white;
+    }
+    label, .stText, .stSelectbox, .stMultiSelect, .stMarkdown {
+        color: white !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -19,7 +24,7 @@ st.title("Dashboard Interactivo para la Renta Anual Neta Media en España")
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
 
-# --- Selector para gráfico de grupos de edad ---
+# --------- GRÁFICO POR EDAD ---------
 st.subheader("📈 Renta Anual Neta Media por Grupo de Edad")
 
 vista_edad = st.selectbox(
@@ -43,7 +48,6 @@ columnas_porcentaje = {
     '30-44': 'RentaAnualNetaMedia30_44Base2010',
     '16-29': 'RentaAnualNetaMedia16_29Base2010'
 }
-
 colores = {
     'Total': 'green',
     '65 o más': 'purple',
@@ -58,6 +62,7 @@ seleccion = st.multiselect(
     default=list(columnas_valores.keys())
 )
 
+# Lógica para columnas y texto
 if vista_edad == "Valores absolutos (€)":
     columnas = columnas_valores
     yaxis_title_edad = "Renta (€)"
@@ -73,51 +78,49 @@ fig_edad = go.Figure()
 
 for grupo in seleccion:
     col = columnas[grupo]
-    color = colores[grupo]
     fig_edad.add_trace(go.Scatter(
         x=df['Periodo'],
         y=df[col],
         mode='lines+markers',
         name=grupo,
-        line=dict(color=color, width=2),
+        line=dict(color=colores[grupo], width=2),
         hovertemplate=f"<b>{grupo}</b><br>Año: %{{x}}<br>Valor: {hover_fmt_edad}<extra></extra>"
     ))
 
 fig_edad.update_layout(
-    xaxis=dict(
-        title="Año",
-        title_font=dict(color="black"),
-        tickfont=dict(color="black"),
-        showgrid=True,
-        gridcolor="lightgray"
-    ),
-    yaxis=dict(
-        title=yaxis_title_edad,
-        title_font=dict(color="black"),
-        tickfont=dict(color="black"),
-        showgrid=True,
-        gridcolor="lightgray",
-        range=y_range_edad if vista_edad != "Valores absolutos (€)" else None
-    ),
+    xaxis=dict(title="Año", title_font=dict(color="white"), tickfont=dict(color="white"),
+               showgrid=True, gridcolor="gray"),
+    yaxis=dict(title=yaxis_title_edad, title_font=dict(color="white"), tickfont=dict(color="white"),
+               showgrid=True, gridcolor="gray", range=y_range_edad if vista_edad != "Valores absolutos (€)" else None),
     template="none",
-    plot_bgcolor='#fafafa',
-    paper_bgcolor='#ffffff',
-    font=dict(family="Segoe UI", size=14, color="black"),
-    legend=dict(
-        orientation="h",
-        y=-0.2,
-        font=dict(color="black")
-    ),
+    plot_bgcolor='#0e1117',
+    paper_bgcolor='#0e1117',
+    font=dict(color="white"),
+    legend=dict(orientation="h", y=-0.2, font=dict(color="white")),
     hovermode='x unified',
     height=550
 )
 
-st.plotly_chart(fig_edad, use_container_width=True)
+st.plotly_chart(fig_edad, use_container_width=True, config={
+    "displayModeBar": True,
+    "modeBarButtonsToRemove": [
+        "zoom", "pan", "select", "zoomIn", "zoomOut", "autoScale", "resetScale"
+    ],
+    "displaylogo": False
+})
 
-# Separador
+# Botón para descargar datos seleccionados
+df_descarga_edad = df[['Periodo'] + [columnas[grupo] for grupo in seleccion]]
+csv_edad = df_descarga_edad.to_csv(index=False).encode('utf-8')
+st.download_button(
+    label="⬇️ Descargar datos seleccionados (Edad)",
+    data=csv_edad,
+    file_name="renta_por_edad.csv",
+    mime='text/csv'
+)
+
+# --------- GRÁFICO POR SEXO ---------
 st.markdown("---")
-
-# --- Segundo gráfico ---
 st.subheader("👥 Renta Anual Neta Media por Sexo")
 
 vista_sexo = st.selectbox(
@@ -152,7 +155,6 @@ fig_sexo.add_trace(go.Scatter(
     line=dict(color='royalblue', width=2),
     hovertemplate=f"Año: %{{x}}<br>{hover_h}<extra></extra>"
 ))
-
 fig_sexo.add_trace(go.Scatter(
     x=df['Periodo'],
     y=df[mujeres_col],
@@ -163,32 +165,33 @@ fig_sexo.add_trace(go.Scatter(
 ))
 
 fig_sexo.update_layout(
-    xaxis=dict(
-        title="Año",
-        title_font=dict(color="black"),
-        tickfont=dict(color="black"),
-        showgrid=True,
-        gridcolor="lightgray"
-    ),
-    yaxis=dict(
-        title=yaxis_title_sexo,
-        title_font=dict(color="black"),
-        tickfont=dict(color="black"),
-        showgrid=True,
-        gridcolor="lightgray",
-        range=y_range_sexo if vista_sexo != "Valores absolutos (€)" else None
-    ),
+    xaxis=dict(title="Año", title_font=dict(color="white"), tickfont=dict(color="white"),
+               showgrid=True, gridcolor="gray"),
+    yaxis=dict(title=yaxis_title_sexo, title_font=dict(color="white"), tickfont=dict(color="white"),
+               showgrid=True, gridcolor="gray", range=y_range_sexo if vista_sexo != "Valores absolutos (€)" else None),
     template="none",
-    plot_bgcolor='#fafafa',
-    paper_bgcolor='#ffffff',
-    font=dict(family="Segoe UI", size=14, color="black"),
-    legend=dict(
-        orientation="h",
-        y=-0.2,
-        font=dict(color="black")
-    ),
+    plot_bgcolor='#0e1117',
+    paper_bgcolor='#0e1117',
+    font=dict(color="white"),
+    legend=dict(orientation="h", y=-0.2, font=dict(color="white")),
     hovermode='x unified',
     height=500
 )
 
-st.plotly_chart(fig_sexo, use_container_width=True)
+st.plotly_chart(fig_sexo, use_container_width=True, config={
+    "displayModeBar": True,
+    "modeBarButtonsToRemove": [
+        "zoom", "pan", "select", "zoomIn", "zoomOut", "autoScale", "resetScale"
+    ],
+    "displaylogo": False
+})
+
+# Botón para descargar datos por sexo
+df_descarga_sexo = df[['Periodo', hombres_col, mujeres_col]]
+csv_sexo = df_descarga_sexo.to_csv(index=False).encode('utf-8')
+st.download_button(
+    label="⬇️ Descargar datos por sexo",
+    data=csv_sexo,
+    file_name="renta_por_sexo.csv",
+    mime='text/csv'
+)
