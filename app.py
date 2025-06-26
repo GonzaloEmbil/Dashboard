@@ -264,8 +264,9 @@ if datos_mapa.empty:
 # URL GeoJSON
 geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
 
-# Crear mapa con manejo de errores
+# SOLUCIÓN SIMPLIFICADA PARA EL COLORBAR
 try:
+    # Crear mapa sin especificar el colorbar en el layout
     fig_mapa = px.choropleth(
         datos_mapa,
         geojson=geojson_url,
@@ -277,34 +278,31 @@ try:
         title=f"Renta Anual Neta Media - {año_seleccionado}",
         range_color=(datos_mapa['Valor'].min() * 0.9, datos_mapa['Valor'].max() * 1.1)
     )
+    
+    # Configuración básica del layout
+    fig_mapa.update_layout(
+        plot_bgcolor='#0e1117',
+        paper_bgcolor='#0e1117',
+        font=dict(color="white"),
+        margin=dict(l=0, r=0, t=50, b=0)
+    )
+    
+    # Configuración del colorbar usando un enfoque directo
+    if fig_mapa.layout.coloraxis:
+        fig_mapa.layout.coloraxis.colorbar.title = titulo_color
+        fig_mapa.layout.coloraxis.colorbar.tickfont.color = "white"
+        fig_mapa.layout.coloraxis.colorbar.titlefont.color = "white"
+    
+    fig_mapa.update_geos(fitbounds="locations", visible=False)
+    fig_mapa.update_traces(
+        hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
+    )
+    
+    st.plotly_chart(fig_mapa, use_container_width=True)
+
 except Exception as e:
     st.error(f"Error al crear el mapa: {str(e)}")
     st.stop()
-
-fig_mapa.update_geos(fitbounds="locations", visible=False)
-
-# Configuración del layout CORREGIDA
-fig_mapa.update_layout(
-    plot_bgcolor='#0e1117',
-    paper_bgcolor='#0e1117',
-    font=dict(color="white"),
-    margin=dict(l=0, r=0, t=50, b=0)
-)
-
-# Configuración del colorbar CORREGIDA
-fig_mapa.update_coloraxes(
-    colorbar=dict(
-        title=titulo_color,
-        tickfont=dict(color="white"),
-        titlefont=dict(color="white")
-    )
-)
-
-fig_mapa.update_traces(
-    hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
-)
-
-st.plotly_chart(fig_mapa, use_container_width=True)
 
 # Botón de descarga
 csv_map = datos_mapa.copy()
