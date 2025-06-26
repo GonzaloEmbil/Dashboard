@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from io import BytesIO
 
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
@@ -12,7 +11,10 @@ st.markdown("""
         background-color: #0e1117;
         color: white;
     }
-    label, .stText, .stSelectbox, .stMultiSelect, .stMarkdown {
+    label, .stText, .stSelectbox, .stMultiSelect, .stMarkdown, .stDownloadButton, .stButton {
+        color: white !important;
+    }
+    .css-1p05t8e, .css-10trblm {
         color: white !important;
     }
     </style>
@@ -28,7 +30,7 @@ df = pd.read_csv('Rentas.csv', sep=';')
 st.subheader("📈 Renta Anual Neta Media por Grupo de Edad")
 
 vista_edad = st.selectbox(
-    "Selecciona el tipo de visualización para grupos de edad:",
+    "Selecciona el tipo de visualización:",
     options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
     index=0,
     key="vista_edad"
@@ -62,7 +64,6 @@ seleccion = st.multiselect(
     default=list(columnas_valores.keys())
 )
 
-# Lógica para columnas y texto
 if vista_edad == "Valores absolutos (€)":
     columnas = columnas_valores
     yaxis_title_edad = "Renta (€)"
@@ -109,7 +110,6 @@ st.plotly_chart(fig_edad, use_container_width=True, config={
     "displaylogo": False
 })
 
-# Botón para descargar datos seleccionados
 df_descarga_edad = df[['Periodo'] + [columnas[grupo] for grupo in seleccion]]
 csv_edad = df_descarga_edad.to_csv(index=False).encode('utf-8')
 st.download_button(
@@ -124,7 +124,7 @@ st.markdown("---")
 st.subheader("👥 Renta Anual Neta Media por Sexo")
 
 vista_sexo = st.selectbox(
-    "Selecciona el tipo de visualización para sexo:",
+    "Selecciona el tipo de visualización:",
     options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
     index=0,
     key="vista_sexo"
@@ -186,7 +186,6 @@ st.plotly_chart(fig_sexo, use_container_width=True, config={
     "displaylogo": False
 })
 
-# Botón para descargar datos por sexo
 df_descarga_sexo = df[['Periodo', hombres_col, mujeres_col]]
 csv_sexo = df_descarga_sexo.to_csv(index=False).encode('utf-8')
 st.download_button(
