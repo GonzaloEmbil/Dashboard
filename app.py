@@ -195,3 +195,101 @@ st.download_button(
     mime='text/csv'
 )
 
+# --------- MAPA INTERACTIVO ---------
+import plotly.express as px
+
+st.markdown("---")
+st.subheader("🗺️ Mapa Interactivo de la Renta Anual Neta Media por Comunidad Autónoma")
+
+# Selección de visualización
+tipo_valor = st.selectbox(
+    "Selecciona el tipo de dato a visualizar:",
+    options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
+    index=0,
+    key="vista_mapa"
+)
+
+# Obtener lista de años disponibles
+años_disponibles = sorted(df['Periodo'].unique())
+año_seleccionado = st.selectbox(
+    "Selecciona el año:",
+    options=años_disponibles,
+    index=años_disponibles.index(2024) if 2024 in años_disponibles else len(años_disponibles) - 1,
+    key="año_mapa"
+)
+
+# Diccionario de correspondencia para nombres de columnas
+columnas_euro = {
+    "Andalucía": "RentaAnualNetaMediaAndalucia",
+    "Aragón": "RentaAnualNetaMediaAragon",
+    "Asturias": "RentaAnualNetaMediaAsturias",
+    "Baleares": "RentaAnualNetaMediaBaleares",
+    "Canarias": "RentaAnualNetaMediaCanarias",
+    "Cantabria": "RentaAnualNetaMediaCantabria",
+    "Castilla y León": "RentaAnualNetaMediaCastillayleon",
+    "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamancha",
+    "Cataluña": "RentaAnualNetaMediaCataluna",
+    "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
+    "Extremadura": "RentaAnualNetaMediaExtremadura",
+    "Galicia": "RentaAnualNetaMediaGalicia",
+    "Madrid": "RentaAnualNetaMediaMadrid",
+    "Murcia": "RentaAnualNetaMediaMurcia",
+    "Navarra": "RentaAnualNetaMediaNavarra",
+    "País Vasco": "RentaAnualNetaMediaPaisVasco",
+    "La Rioja": "RentaAnualNetaMediaRioja",
+    "Ceuta": "RentaAnualNetaMediaCeuta",
+    "Melilla": "RentaAnualNetaMediaMelilla"
+}
+
+columnas_pct = {k: v + "Base2010" for k, v in columnas_euro.items()}
+
+columnas_usar = columnas_euro if tipo_valor == "Valores absolutos (€)" else columnas_pct
+titulo_color = "Renta (€)" if tipo_valor == "Valores absolutos (€)" else "Índice (base 2010 = 100)"
+formato_hover = ".0f" if tipo_valor == "Valores absolutos (€)" else ".1f"
+
+# Filtrar datos por año seleccionado
+df_año = df[df["Periodo"] == año_seleccionado].copy()
+
+# Crear nuevo DataFrame para el mapa
+datos_mapa = pd.DataFrame({
+    "Comunidad Autónoma": list(columnas_usar.keys()),
+    "Valor": [df_año[col].values[0] if col in df_año else None for col in columnas_usar.values()]
+})
+
+# GeoJSON con comunidades autónomas
+geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
+
+# Mapa choropleth con escala progresiva
+fig_mapa = px.choropleth(
+    datos_mapa,
+    geojson=geojson_url,
+    featureidkey="properties.name",
+    locations="Comunidad Autónoma",
+    color="Valor",
+    color_continuous_scale="YlGnBu",  # Otra opción: "RdYlGn"
+    title=f"Renta Anual Neta Media - {año_seleccionado}",
+)
+
+fig_mapa.update_geos(fitbounds="locations", visible=False)
+fig_mapa.update_layout(
+    plot_bgcolor='#0e1117',
+    paper_bgcolor='#0e1117',
+    font=dict(color="white"),
+    coloraxis_colorbar=dict(title=titulo_color, tickfont=dict(color="white"), titlefont=dict(color="white")),
+    margin=dict(l=0, r=0, t=50, b=0)
+)
+fig_mapa.update_traces(
+    hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}"
+)
+
+st.plotly_chart(fig_mapa, use_container_width=True)
+
+# Botón de descarga
+csv_map = datos_mapa.copy()
+csv_map.insert(0, "Año", año_seleccionado)
+st.download_button(
+    label="⬇️ Descargar CSV con los datos del mapa",
+    data=csv_map.to_csv(index=False).encode("utf-8"),
+    file_name="renta_mapa_comunidades.csv",
+    mime="text/csv"
+)
