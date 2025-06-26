@@ -5,6 +5,15 @@ import plotly.graph_objects as go
 # Configurar la página
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
+# Estilo personalizado para forzar texto negro en Streamlit
+st.markdown("""
+    <style>
+    body, .stTextInput label, .stSelectbox label, .stMultiSelect label, .stDownloadButton label {
+        color: black !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Título principal
 st.title("📊 Evolución de la Renta Anual Neta Media")
 st.markdown("Selecciona los grupos de edad que deseas visualizar y descarga los datos si lo necesitas.")
@@ -55,7 +64,10 @@ for grupo in seleccion:
 
 # Configurar diseño del gráfico
 fig.update_layout(
-    title="📈 Renta Anual Neta Media por Grupo de Edad",
+    title=dict(
+        text="📈 Renta Anual Neta Media por Grupo de Edad",
+        font=dict(color="black")
+    ),
     xaxis=dict(
         title="Año",
         title_font=dict(color="black"),
@@ -81,11 +93,6 @@ fig.update_layout(
     hovermode='x unified',
     height=550
 )
-
-
-# Ejes en color negro y con grilla clara
-fig.update_xaxes(color="black", showgrid=True, gridcolor="lightgray")
-fig.update_yaxes(color="black", showgrid=True, gridcolor="lightgray", range=[8000, 18000])
 
 # Mostrar gráfico
 st.plotly_chart(fig, use_container_width=True)
