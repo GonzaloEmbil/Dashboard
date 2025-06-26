@@ -266,7 +266,8 @@ if datos_mapa.empty:
 # SOLUCIÓN DEFINITIVA: Usar un GeoJSON válido y verificado
 try:
     # GeoJSON alternativo probado y funcional
-    geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
+    geojson_url = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/spain-communities.json"
+    
     
     # Descargar y verificar el GeoJSON
     response = requests.get(geojson_url)
