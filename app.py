@@ -195,7 +195,7 @@ st.download_button(
     mime='text/csv'
 )
 
-# --------- MAPA COROPLÉTICO FUNCIONAL Y VERIFICADO ---------
+# --------- MAPA COROPLÉTICO FUNCIONAL ---------
 import plotly.graph_objects as go
 
 st.markdown("---")
@@ -229,7 +229,7 @@ columnas_euro = {
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
     "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamancha",
     "Cataluña": "RentaAnualNetaMediaCataluna",
-    "C. Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
+    "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
     "Madrid": "RentaAnualNetaMediaMadrid",
@@ -261,7 +261,7 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# GEOJSON SIMPLIFICADO PERO FUNCIONAL
+# GEOJSON CON NOMBRES ESTANDARIZADOS
 geojson_data = {
     "type": "FeatureCollection",
     "features": [
@@ -274,7 +274,7 @@ geojson_data = {
         {"type": "Feature", "properties": {"name": "Castilla y León"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.0, 40.0], [-1.0, 40.0], [-1.0, 43.0], [-7.0, 43.0], [-7.0, 40.0]]]}},
         {"type": "Feature", "properties": {"name": "Castilla-La Mancha"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 38.0], [-1.0, 38.0], [-1.0, 40.5], [-4.5, 40.5], [-4.5, 38.0]]]}},
         {"type": "Feature", "properties": {"name": "Cataluña"}, "geometry": {"type": "Polygon", "coordinates": [[[0.0, 40.0], [3.5, 40.0], [3.5, 42.5], [0.0, 42.5], [0.0, 40.0]]]}},
-        {"type": "Feature", "properties": {"name": "C. Valenciana"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0, 37.5], [0.5, 37.5], [0.5, 40.5], [-1.0, 40.5], [-1.0, 37.5]]]}},
+        {"type": "Feature", "properties": {"name": "Comunidad Valenciana"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0, 37.5], [0.5, 37.5], [0.5, 40.5], [-1.0, 40.5], [-1.0, 37.5]]]}},
         {"type": "Feature", "properties": {"name": "Extremadura"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 38.0], [-4.0, 38.0], [-4.0, 40.5], [-7.5, 40.5], [-7.5, 38.0]]]}},
         {"type": "Feature", "properties": {"name": "Galicia"}, "geometry": {"type": "Polygon", "coordinates": [[[-9.0, 41.5], [-6.5, 41.5], [-6.5, 44.0], [-9.0, 44.0], [-9.0, 41.5]]]}},
         {"type": "Feature", "properties": {"name": "Madrid"}, "geometry": {"type": "Point", "coordinates": [-3.7, 40.4]}},
@@ -287,31 +287,26 @@ geojson_data = {
     ]
 }
 
-# VERIFICACIÓN DE DATOS Y NOMBRES
-st.write("### Verificación de datos")
-st.write("Datos del mapa:", datos_mapa)
+# SOLUCIÓN CONFIABLE - CORRESPONDENCIA EXACTA DE NOMBRES
+# Asegurar que los nombres en datos_mapa coincidan exactamente con el GeoJSON
+nombre_mapping = {
+    "C. Valenciana": "Comunidad Valenciana"
+}
+datos_mapa['Comunidad Autónoma'] = datos_mapa['Comunidad Autónoma'].replace(nombre_mapping)
 
-# Obtener nombres del GeoJSON
-nombres_geojson = [feature['properties']['name'] for feature in geojson_data['features']]
-st.write("Nombres en el GeoJSON:", nombres_geojson)
-
-# Verificar correspondencia
-nombres_faltantes = set(datos_mapa['Comunidad Autónoma']) - set(nombres_geojson)
-if nombres_faltantes:
-    st.warning(f"⚠️ Comunidades sin correspondencia en el GeoJSON: {', '.join(nombres_faltantes)}")
-
-# SOLUCIÓN CONFIABLE PARA EL MAPA
 try:
-    # Crear figura de Plotly
-    fig = go.Figure()
+    # Calcular rango de colores
+    min_val = datos_mapa['Valor'].min()
+    max_val = datos_mapa['Valor'].max()
+    rango = [min_val - 0.05*(max_val-min_val), max_val + 0.05*(max_val-min_val)]
     
-    # Añadir capa de choropleth
-    fig.add_trace(go.Choropleth(
+    # Crear figura
+    fig = go.Figure(go.Choropleth(
         geojson=geojson_data,
         locations=datos_mapa['Comunidad Autónoma'],
         z=datos_mapa['Valor'],
         featureidkey="properties.name",
-        colorscale='YlOrRd',  # Paleta más contrastada
+        colorscale='Viridis',  # Paleta más efectiva
         marker_line_width=0.5,
         marker_line_color='white',
         colorbar=dict(
@@ -319,11 +314,14 @@ try:
             tickfont=dict(color="white"),
             title_font=dict(color="white")
         ),
+        zmin=rango[0],
+        zmax=rango[1],
         hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
     ))
     
-    # Configuración avanzada del mapa
+    # Configuración del mapa
     fig.update_geos(
+        fitbounds="locations",
         visible=False,
         center=dict(lat=40.0, lon=-4.0),
         projection_scale=5.5,
@@ -332,35 +330,30 @@ try:
         showsubunits=True,
         subunitcolor="rgba(255,255,255,0.3)",
         bgcolor='rgba(0,0,0,0)',
-        landcolor='rgba(0,0,0,0.1)'
+        resolution=50  # Más detalle
     )
     
     fig.update_layout(
-        title=f"Renta Anual Neta Media - {año_seleccionado}",
+        title=dict(
+            text=f"Renta Anual Neta Media - {año_seleccionado}",
+            font=dict(color="white", size=20)
+        ),
         plot_bgcolor='#0e1117',
         paper_bgcolor='#0e1117',
         font=dict(color="white", family="Arial"),
-        margin=dict(l=0, r=0, t=50, b=0),
-        height=600
-    )
-    
-    # Ajustar límites del mapa
-    fig.update_geos(
-        lonaxis_range=[-10, 5],  # Longitud de España
-        lataxis_range=[35, 44]    # Latitud de España
+        margin=dict(l=0, r=0, t=60, b=0),
+        height=650,
+        geo=dict(  # Ajuste específico para la vista de España
+            lonaxis_range=[-10, 5],
+            lataxis_range=[35, 44]
+        )
     )
     
     st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
     st.error(f"Error creando el mapa: {str(e)}")
-    
-    # Mostrar datos en tabla como alternativa
-    st.subheader("Datos por Comunidad Autónoma")
-    st.dataframe(
-        datos_mapa.style.format({"Valor": "{:,.0f} €" if tipo_valor == "Valores absolutos (€)" else "{:,.1f} %"}),
-        height=400
-    )
+    # Solo mostramos el error sin tablas ni otros gráficos
 
 # Botón de descarga
 csv_map = datos_mapa.copy()
