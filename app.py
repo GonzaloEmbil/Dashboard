@@ -197,8 +197,6 @@ st.download_button(
 
 # --------- MAPA INTERACTIVO ---------
 import plotly.express as px
-import json
-import requests
 
 st.markdown("---")
 st.subheader("🗺️ Mapa Interactivo de la Renta Anual Neta Media por Comunidad Autónoma")
@@ -224,8 +222,8 @@ año_seleccionado = st.selectbox(
 columnas_euro = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
-    "Principado de Asturias": "RentaAnualNetaMediaAsturias",
-    "Islas Baleares": "RentaAnualNetaMediaBaleares",
+    "Asturias": "RentaAnualNetaMediaAsturias",
+    "Baleares": "RentaAnualNetaMediaBaleares",
     "Canarias": "RentaAnualNetaMediaCanarias",
     "Cantabria": "RentaAnualNetaMediaCantabria",
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
@@ -234,9 +232,9 @@ columnas_euro = {
     "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
-    "Comunidad de Madrid": "RentaAnualNetaMediaMadrid",
-    "Región de Murcia": "RentaAnualNetaMediaMurcia",
-    "Comunidad Foral de Navarra": "RentaAnualNetaMediaNavarra",
+    "Madrid": "RentaAnualNetaMediaMadrid",
+    "Murcia": "RentaAnualNetaMediaMurcia",
+    "Navarra": "RentaAnualNetaMediaNavarra",
     "País Vasco": "RentaAnualNetaMediaPaisVasco",
     "La Rioja": "RentaAnualNetaMediaRioja",
     "Ceuta": "RentaAnualNetaMediaCeuta",
@@ -263,130 +261,75 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# SOLUCIÓN DEFINITIVA: Usar un GeoJSON válido y verificado
-try:
-    # GeoJSON alternativo probado y funcional
-    geojson_url = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/spain-communities.json"
-    
-    
-    # Descargar y verificar el GeoJSON
-    response = requests.get(geojson_url)
-    response.raise_for_status()
-    
-    # Intentar cargar el JSON para verificar su validez
-    geojson_data = json.loads(response.text)
-    
-    # Verificar que es un GeoJSON válido
-    if not isinstance(geojson_data, dict) or "features" not in geojson_data:
-        raise ValueError("El GeoJSON no tiene la estructura esperada")
-    
-    # Crear el mapa
-    fig_mapa = px.choropleth(
-        datos_mapa,
-        geojson=geojson_data,
-        featureidkey="properties.name",
-        locations="Comunidad Autónoma",
-        color="Valor",
-        color_continuous_scale="YlGnBu",
-        labels={"Valor": titulo_color},
-        title=f"Renta Anual Neta Media - {año_seleccionado}",
-        range_color=(datos_mapa['Valor'].min() * 0.9, datos_mapa['Valor'].max() * 1.1)
-    )
-    
-    # Configuración básica
-    fig_mapa.update_geos(
-        fitbounds="locations", 
-        visible=False,
-        bgcolor='#0e1117'
-    )
-    
-    fig_mapa.update_layout(
-        plot_bgcolor='#0e1117',
-        paper_bgcolor='#0e1117',
-        font=dict(color="white"),
-        margin=dict(l=0, r=0, t=50, b=0),
-        coloraxis_colorbar=dict(
-            title=titulo_color,
-            tickfont=dict(color="white"),
-            title_font=dict(color="white")
-        )
-    )
-    
-    fig_mapa.update_traces(
-        hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
-    )
-    
-    st.plotly_chart(fig_mapa, use_container_width=True)
+# Coordenadas precisas de las capitales de las comunidades autónomas
+coordenadas = {
+    "Andalucía": {"lat": 37.3891, "lon": -5.9845},   # Sevilla
+    "Aragón": {"lat": 41.6561, "lon": -0.8753},       # Zaragoza
+    "Asturias": {"lat": 43.3616, "lon": -5.8494},     # Oviedo
+    "Baleares": {"lat": 39.5696, "lon": 2.6502},      # Palma de Mallorca
+    "Canarias": {"lat": 28.1248, "lon": -15.43},      # Las Palmas de Gran Canaria
+    "Cantabria": {"lat": 43.4623, "lon": -3.80998},   # Santander
+    "Castilla y León": {"lat": 41.6528, "lon": -4.7236}, # Valladolid
+    "Castilla-La Mancha": {"lat": 39.8628, "lon": -4.0273}, # Toledo
+    "Cataluña": {"lat": 41.3825, "lon": 2.1769},      # Barcelona
+    "Comunidad Valenciana": {"lat": 39.407, "lon": -0.5000}, # Valencia
+    "Extremadura": {"lat": 38.881, "lon": -6.9706},   # Mérida
+    "Galicia": {"lat": 42.431, "lon": -8.64435},      # Santiago de Compostela
+    "Madrid": {"lat": 40.4168, "lon": -3.7038},       # Madrid
+    "Murcia": {"lat": 37.9922, "lon": -1.1307},       # Murcia
+    "Navarra": {"lat": 42.8178, "lon": -1.6432},      # Pamplona
+    "País Vasco": {"lat": 42.8467, "lon": -2.6722},   # Vitoria-Gasteiz
+    "La Rioja": {"lat": 42.4627, "lon": -2.44499},    # Logroño
+    "Ceuta": {"lat": 35.8883, "lon": -5.3162},        # Ceuta
+    "Melilla": {"lat": 35.2917, "lon": -2.9383}       # Melilla
+}
 
-except Exception as e:
-    st.error(f"Error al crear el mapa: {str(e)}")
-    
-    # SOLUCIÓN ALTERNATIVA: Mapa de España usando coordenadas
-    st.subheader("Visualización Alternativa: Mapa de España")
-    
-    # Coordenadas aproximadas de las comunidades autónomas
-    coordenadas = {
-        "Andalucía": {"lat": 37.5, "lon": -4.5},
-        "Aragón": {"lat": 41.5, "lon": -0.5},
-        "Principado de Asturias": {"lat": 43.3, "lon": -6.0},
-        "Islas Baleares": {"lat": 39.5, "lon": 3.0},
-        "Canarias": {"lat": 28.3, "lon": -16.6},
-        "Cantabria": {"lat": 43.2, "lon": -4.0},
-        "Castilla y León": {"lat": 41.8, "lon": -4.5},
-        "Castilla-La Mancha": {"lat": 39.5, "lon": -3.0},
-        "Cataluña": {"lat": 41.8, "lon": 1.5},
-        "Comunidad Valenciana": {"lat": 39.5, "lon": -0.5},
-        "Extremadura": {"lat": 39.0, "lon": -6.0},
-        "Galicia": {"lat": 42.5, "lon": -8.0},
-        "Comunidad de Madrid": {"lat": 40.4, "lon": -3.7},
-        "Región de Murcia": {"lat": 37.9, "lon": -1.5},
-        "Comunidad Foral de Navarra": {"lat": 42.8, "lon": -1.6},
-        "País Vasco": {"lat": 43.0, "lon": -2.5},
-        "La Rioja": {"lat": 42.3, "lon": -2.5},
-        "Ceuta": {"lat": 35.9, "lon": -5.3},
-        "Melilla": {"lat": 35.3, "lon": -2.9}
-    }
-    
-    # Agregar coordenadas al DataFrame
-    datos_mapa['lat'] = datos_mapa['Comunidad Autónoma'].map(lambda x: coordenadas.get(x, {}).get('lat'))
-    datos_mapa['lon'] = datos_mapa['Comunidad Autónoma'].map(lambda x: coordenadas.get(x, {}).get('lon'))
-    
-    # Crear mapa de burbujas
-    fig = px.scatter_mapbox(
-        datos_mapa,
-        lat='lat',
-        lon='lon',
-        size='Valor',
-        color='Valor',
-        hover_name='Comunidad Autónoma',
-        hover_data={'Valor': True, 'lat': False, 'lon': False},
-        zoom=4.5,
-        center={"lat": 40.0, "lon": -4.0},
-        mapbox_style="carto-darkmatter",
-        color_continuous_scale="YlGnBu",
-        title=f"Renta Anual Neta Media - {año_seleccionado}",
-        size_max=30
+# Agregar coordenadas al DataFrame
+datos_mapa['lat'] = datos_mapa['Comunidad Autónoma'].map(lambda x: coordenadas.get(x, {}).get('lat'))
+datos_mapa['lon'] = datos_mapa['Comunidad Autónoma'].map(lambda x: coordenadas.get(x, {}).get('lon'))
+
+# Crear mapa de burbujas interactivo
+fig = px.scatter_mapbox(
+    datos_mapa,
+    lat='lat',
+    lon='lon',
+    size='Valor',
+    color='Valor',
+    hover_name='Comunidad Autónoma',
+    hover_data={'Valor': True, 'lat': False, 'lon': False},
+    zoom=4.5,
+    center={"lat": 40.0, "lon": -4.0},
+    mapbox_style="carto-darkmatter",
+    color_continuous_scale="YlGnBu",
+    title=f"Renta Anual Neta Media - {año_seleccionado}",
+    size_max=30
+)
+
+fig.update_layout(
+    plot_bgcolor='#0e1117',
+    paper_bgcolor='#0e1117',
+    font=dict(color="white"),
+    margin=dict(l=0, r=0, t=50, b=0),
+    mapbox=dict(
+        style="carto-darkmatter",
+        center=dict(lat=40.0, lon=-4.0),
+        zoom=4.5
     )
-    
-    fig.update_layout(
-        plot_bgcolor='#0e1117',
-        paper_bgcolor='#0e1117',
-        font=dict(color="white"),
-        margin=dict(l=0, r=0, t=50, b=0),
-        mapbox=dict(
-            style="carto-darkmatter",
-            center=dict(lat=40.0, lon=-4.0),
-            zoom=4.5
-        )
+)
+
+# Formatear el texto del hover
+if tipo_valor == "Valores absolutos (€)":
+    fig.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>Renta: %{marker.size:,.0f} €<extra></extra>",
+        marker=dict(sizemode='diameter')
     )
-    
-    # Formatear el texto del hover
-    if tipo_valor == "Valores absolutos (€)":
-        fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Renta: %{marker.size:,.0f} €<extra></extra>")
-    else:
-        fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Índice: %{marker.size:.1f} %<extra></extra>")
-    
-    st.plotly_chart(fig, use_container_width=True)
+else:
+    fig.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>Índice: %{marker.size:.1f} %<extra></extra>",
+        marker=dict(sizemode='diameter')
+    )
+
+st.plotly_chart(fig, use_container_width=True)
 
 # Botón de descarga
 csv_map = datos_mapa.copy()
