@@ -16,7 +16,7 @@ st.markdown("""
 
 # Título principal
 st.title("📊 Evolución de la Renta Anual Neta Media")
-st.markdown("Selecciona los grupos de edad que deseas visualizar y descarga los datos si lo necesitas.")
+st.markdown("Selecciona los grupos de edad que deseas visualizar:")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
@@ -30,16 +30,12 @@ columnas_lineas = {
     '16-29': ('RentaAnualNetaMedia16_29', 'gray')
 }
 
-# Sidebar con filtros
-with st.sidebar:
-    st.header("⚙️ Filtros")
-    seleccion = st.multiselect(
-        "Grupos de edad:",
-        options=list(columnas_lineas.keys()),
-        default=list(columnas_lineas.keys())
-    )
-    st.markdown("---")
-    st.write("Puedes descargar los datos en CSV al final.")
+# Menú desplegable de selección (múltiple)
+seleccion = st.multiselect(
+    "Grupos de edad:",
+    options=list(columnas_lineas.keys()),
+    default=list(columnas_lineas.keys())
+)
 
 # Filtrar columnas seleccionadas
 columnas_csv = ['Periodo'] + [columnas_lineas[grupo][0] for grupo in seleccion]
