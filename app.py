@@ -218,7 +218,7 @@ año_seleccionado = st.selectbox(
     key="año_mapa"
 )
 
-# Diccionario de correspondencia para nombres de columnas
+# Diccionario de columnas
 columnas_euro = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
@@ -242,7 +242,6 @@ columnas_euro = {
 }
 
 columnas_pct = {k: v + "Base2010" for k, v in columnas_euro.items()}
-
 columnas_usar = columnas_euro if tipo_valor == "Valores absolutos (€)" else columnas_pct
 titulo_color = "Renta (€)" if tipo_valor == "Valores absolutos (€)" else "Índice (base 2010 = 100)"
 formato_hover = ".0f" if tipo_valor == "Valores absolutos (€)" else ".1f"
@@ -250,39 +249,55 @@ formato_hover = ".0f" if tipo_valor == "Valores absolutos (€)" else ".1f"
 # Filtrar datos por año seleccionado
 df_año = df[df["Periodo"] == año_seleccionado].copy()
 
-# Crear nuevo DataFrame para el mapa
+# Crear datos para el mapa con manejo de valores nulos
 datos_mapa = pd.DataFrame({
     "Comunidad Autónoma": list(columnas_usar.keys()),
-    "Valor": [df_año[col].values[0] if col in df_año.columns else None for col in columnas_usar.values()]
-})
+    "Valor": [df_año[col].values[0] if col in df_año.columns and not df_año[col].isnull().all() 
+             else None for col in columnas_usar.values()]
+}).dropna(subset=['Valor'])
 
-# URL GeoJSON de comunidades autónomas de España
+# Verificar si hay datos
+if datos_mapa.empty:
+    st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
+    st.stop()
+
+# URL GeoJSON
 geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
 
-# Crear mapa choropleth con paleta progresiva
-fig_mapa = px.choropleth(
-    datos_mapa,
-    geojson=geojson_url,
-    featureidkey="properties.name",
-    locations="Comunidad Autónoma",
-    color="Valor",
-    color_continuous_scale="YlGnBu",  # Paleta progresiva
-    labels={"Valor": titulo_color},
-    title=f"Renta Anual Neta Media - {año_seleccionado}"
-)
+# Crear mapa con manejo de errores
+try:
+    fig_mapa = px.choropleth(
+        datos_mapa,
+        geojson=geojson_url,
+        featureidkey="properties.name",
+        locations="Comunidad Autónoma",
+        color="Valor",
+        color_continuous_scale="YlGnBu",
+        labels={"Valor": titulo_color},
+        title=f"Renta Anual Neta Media - {año_seleccionado}",
+        range_color=(datos_mapa['Valor'].min() * 0.9, datos_mapa['Valor'].max() * 1.1)
+    )
+except Exception as e:
+    st.error(f"Error al crear el mapa: {str(e)}")
+    st.stop()
 
 fig_mapa.update_geos(fitbounds="locations", visible=False)
 
+# Configuración del layout CORREGIDA
 fig_mapa.update_layout(
     plot_bgcolor='#0e1117',
     paper_bgcolor='#0e1117',
     font=dict(color="white"),
-    coloraxis_colorbar=dict(
+    margin=dict(l=0, r=0, t=50, b=0)
+)
+
+# Configuración del colorbar CORREGIDA
+fig_mapa.update_coloraxes(
+    colorbar=dict(
         title=titulo_color,
         tickfont=dict(color="white"),
         titlefont=dict(color="white")
-    ),
-    margin=dict(l=0, r=0, t=50, b=0)
+    )
 )
 
 fig_mapa.update_traces(
