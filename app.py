@@ -253,39 +253,40 @@ df_año = df[df["Periodo"] == año_seleccionado].copy()
 # Crear nuevo DataFrame para el mapa
 datos_mapa = pd.DataFrame({
     "Comunidad Autónoma": list(columnas_usar.keys()),
-    "Valor": [df_año[col].values[0] if col in df_año else None for col in columnas_usar.values()]
+    "Valor": [df_año[col].values[0] if col in df_año.columns else None for col in columnas_usar.values()]
 })
 
-# GeoJSON con comunidades autónomas
+# URL GeoJSON de comunidades autónomas de España
 geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
 
-# Mapa choropleth con escala progresiva
+# Crear mapa choropleth con paleta progresiva
 fig_mapa = px.choropleth(
     datos_mapa,
     geojson=geojson_url,
     featureidkey="properties.name",
     locations="Comunidad Autónoma",
     color="Valor",
-    color_continuous_scale="YlGnBu",  # Otra opción: "RdYlGn"
-    title=f"Renta Anual Neta Media - {año_seleccionado}",
+    color_continuous_scale="YlGnBu",  # Paleta progresiva
+    labels={"Valor": titulo_color},
+    title=f"Renta Anual Neta Media - {año_seleccionado}"
 )
+
+fig_mapa.update_geos(fitbounds="locations", visible=False)
 
 fig_mapa.update_layout(
     plot_bgcolor='#0e1117',
     paper_bgcolor='#0e1117',
     font=dict(color="white"),
-    coloraxis=dict(
-        colorbar=dict(
-            title=titulo_color,
-            tickfont=dict(color="white"),
-            titlefont=dict(color="white")
-        )
+    coloraxis_colorbar=dict(
+        title=titulo_color,
+        tickfont=dict(color="white"),
+        titlefont=dict(color="white")
     ),
     margin=dict(l=0, r=0, t=50, b=0)
 )
 
 fig_mapa.update_traces(
-    hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}"
+    hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
 )
 
 st.plotly_chart(fig_mapa, use_container_width=True)
