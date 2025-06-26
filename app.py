@@ -197,6 +197,7 @@ st.download_button(
 
 # --------- MAPA INTERACTIVO ---------
 import plotly.express as px
+import json
 import requests
 
 st.markdown("---")
@@ -223,8 +224,8 @@ año_seleccionado = st.selectbox(
 columnas_euro = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
-    "Asturias": "RentaAnualNetaMediaAsturias",
-    "Baleares": "RentaAnualNetaMediaBaleares",
+    "Principado de Asturias": "RentaAnualNetaMediaAsturias",
+    "Islas Baleares": "RentaAnualNetaMediaBaleares",
     "Canarias": "RentaAnualNetaMediaCanarias",
     "Cantabria": "RentaAnualNetaMediaCantabria",
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
@@ -233,9 +234,9 @@ columnas_euro = {
     "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
-    "Madrid": "RentaAnualNetaMediaMadrid",
-    "Murcia": "RentaAnualNetaMediaMurcia",
-    "Navarra": "RentaAnualNetaMediaNavarra",
+    "Comunidad de Madrid": "RentaAnualNetaMediaMadrid",
+    "Región de Murcia": "RentaAnualNetaMediaMurcia",
+    "Comunidad Foral de Navarra": "RentaAnualNetaMediaNavarra",
     "País Vasco": "RentaAnualNetaMediaPaisVasco",
     "La Rioja": "RentaAnualNetaMediaRioja",
     "Ceuta": "RentaAnualNetaMediaCeuta",
@@ -262,19 +263,23 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# SOLUCIÓN ALTERNATIVA: Descargar el GeoJSON y usarlo directamente
+# SOLUCIÓN DEFINITIVA: Usar un GeoJSON válido y verificado
 try:
-    # Descargar el GeoJSON
-    geojson_url = "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/spain/spain-comunidad-with-canary-islands.json"
+    # GeoJSON alternativo probado y funcional
+    geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
+    
+    # Descargar y verificar el GeoJSON
     response = requests.get(geojson_url)
-    geojson_data = response.json()
+    response.raise_for_status()
     
-    # Verificar los nombres de las comunidades en el GeoJSON
-    nombres_geojson = [feature['properties']['name'] for feature in geojson_data['features']]
-    st.write("Nombres de comunidades en GeoJSON:", nombres_geojson)
-    st.write("Nombres en nuestros datos:", datos_mapa['Comunidad Autónoma'].tolist())
+    # Intentar cargar el JSON para verificar su validez
+    geojson_data = json.loads(response.text)
     
-    # Crear el mapa con el GeoJSON descargado
+    # Verificar que es un GeoJSON válido
+    if not isinstance(geojson_data, dict) or "features" not in geojson_data:
+        raise ValueError("El GeoJSON no tiene la estructura esperada")
+    
+    # Crear el mapa
     fig_mapa = px.choropleth(
         datos_mapa,
         geojson=geojson_data,
@@ -288,17 +293,18 @@ try:
     )
     
     # Configuración básica
-    fig_mapa.update_geos(fitbounds="locations", visible=False)
+    fig_mapa.update_geos(
+        fitbounds="locations", 
+        visible=False,
+        bgcolor='#0e1117'
+    )
+    
     fig_mapa.update_layout(
         plot_bgcolor='#0e1117',
         paper_bgcolor='#0e1117',
         font=dict(color="white"),
-        margin=dict(l=0, r=0, t=50, b=0)
-    )
-    
-    # Configuración del colorbar
-    fig_mapa.update_coloraxes(
-        colorbar=dict(
+        margin=dict(l=0, r=0, t=50, b=0),
+        coloraxis_colorbar=dict(
             title=titulo_color,
             tickfont=dict(color="white"),
             title_font=dict(color="white")
@@ -314,35 +320,72 @@ try:
 except Exception as e:
     st.error(f"Error al crear el mapa: {str(e)}")
     
-    # Mostrar los datos en una tabla como alternativa
-    st.subheader("Tabla de Datos por Comunidad Autónoma")
-    st.dataframe(
-        datos_mapa.style.format({"Valor": "{:,.0f} €" if tipo_valor == "Valores absolutos (€)" else "{:,.1f} %"}),
-        height=400
+    # SOLUCIÓN ALTERNATIVA: Mapa de España usando coordenadas
+    st.subheader("Visualización Alternativa: Mapa de España")
+    
+    # Coordenadas aproximadas de las comunidades autónomas
+    coordenadas = {
+        "Andalucía": {"lat": 37.5, "lon": -4.5},
+        "Aragón": {"lat": 41.5, "lon": -0.5},
+        "Principado de Asturias": {"lat": 43.3, "lon": -6.0},
+        "Islas Baleares": {"lat": 39.5, "lon": 3.0},
+        "Canarias": {"lat": 28.3, "lon": -16.6},
+        "Cantabria": {"lat": 43.2, "lon": -4.0},
+        "Castilla y León": {"lat": 41.8, "lon": -4.5},
+        "Castilla-La Mancha": {"lat": 39.5, "lon": -3.0},
+        "Cataluña": {"lat": 41.8, "lon": 1.5},
+        "Comunidad Valenciana": {"lat": 39.5, "lon": -0.5},
+        "Extremadura": {"lat": 39.0, "lon": -6.0},
+        "Galicia": {"lat": 42.5, "lon": -8.0},
+        "Comunidad de Madrid": {"lat": 40.4, "lon": -3.7},
+        "Región de Murcia": {"lat": 37.9, "lon": -1.5},
+        "Comunidad Foral de Navarra": {"lat": 42.8, "lon": -1.6},
+        "País Vasco": {"lat": 43.0, "lon": -2.5},
+        "La Rioja": {"lat": 42.3, "lon": -2.5},
+        "Ceuta": {"lat": 35.9, "lon": -5.3},
+        "Melilla": {"lat": 35.3, "lon": -2.9}
+    }
+    
+    # Agregar coordenadas al DataFrame
+    datos_mapa['lat'] = datos_mapa['Comunidad Autónoma'].map(lambda x: coordenadas.get(x, {}).get('lat'))
+    datos_mapa['lon'] = datos_mapa['Comunidad Autónoma'].map(lambda x: coordenadas.get(x, {}).get('lon'))
+    
+    # Crear mapa de burbujas
+    fig = px.scatter_mapbox(
+        datos_mapa,
+        lat='lat',
+        lon='lon',
+        size='Valor',
+        color='Valor',
+        hover_name='Comunidad Autónoma',
+        hover_data={'Valor': True, 'lat': False, 'lon': False},
+        zoom=4.5,
+        center={"lat": 40.0, "lon": -4.0},
+        mapbox_style="carto-darkmatter",
+        color_continuous_scale="YlGnBu",
+        title=f"Renta Anual Neta Media - {año_seleccionado}",
+        size_max=30
     )
     
-    # Intentar crear un mapa más simple sin GeoJSON
-    st.subheader("Visualización Alternativa: Mapa de Calor")
-    try:
-        fig_simple = px.choropleth(
-            datos_mapa,
-            locationmode="country names",
-            locations="Comunidad Autónoma",
-            color="Valor",
-            scope="europe",
-            color_continuous_scale="YlGnBu",
-            labels={"Valor": titulo_color},
-            title=f"Renta Anual Neta Media - {año_seleccionado}"
+    fig.update_layout(
+        plot_bgcolor='#0e1117',
+        paper_bgcolor='#0e1117',
+        font=dict(color="white"),
+        margin=dict(l=0, r=0, t=50, b=0),
+        mapbox=dict(
+            style="carto-darkmatter",
+            center=dict(lat=40.0, lon=-4.0),
+            zoom=4.5
         )
-        fig_simple.update_layout(
-            geo=dict(
-                center=dict(lat=40, lon=-4),
-                projection_scale=6
-            )
-        )
-        st.plotly_chart(fig_simple, use_container_width=True)
-    except:
-        st.warning("No se pudo crear ninguna visualización del mapa.")
+    )
+    
+    # Formatear el texto del hover
+    if tipo_valor == "Valores absolutos (€)":
+        fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Renta: %{marker.size:,.0f} €<extra></extra>")
+    else:
+        fig.update_traces(hovertemplate="<b>%{hovertext}</b><br>Índice: %{marker.size:.1f} %<extra></extra>")
+    
+    st.plotly_chart(fig, use_container_width=True)
 
 # Botón de descarga
 csv_map = datos_mapa.copy()
