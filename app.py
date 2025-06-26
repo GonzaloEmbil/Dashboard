@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import io
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
@@ -40,12 +41,22 @@ for grupo in seleccion:
     col, color, grosor = columnas_lineas[grupo]
     ax.plot(x, df[col], label=grupo, color=color, linewidth=grosor, zorder=5)
 
-# Leyenda
+# Leyenda o mensaje
 if seleccion:
     ax.legend()
 else:
     ax.text(0.5, 0.5, "Selecciona al menos una línea para mostrar", 
             horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
 
-# Mostrar en Streamlit
+# Mostrar gráfico
 st.pyplot(fig)
+
+# Botón para descargar imagen
+buf = io.BytesIO()
+fig.savefig(buf, format="png")
+st.download_button(
+    label="📥 Descargar gráfico como PNG",
+    data=buf.getvalue(),
+    file_name="renta_media.png",
+    mime="image/png"
+)
