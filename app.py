@@ -73,4 +73,4 @@ with col1:
     csv = df_filtrado.to_csv(index=False, sep=';').encode('utf-8-sig')
     st.download_button("📄 Descargar datos como CSV", csv, file_name="datos_renta_media.csv", mime="text/csv")
 with col2:
-    st.markdown("💡 Clic derecho en el gráfico → *Guardar imagen como...*")
+    st.markdown("💡 Clic derecho en el gráfico → *Guardar imagen como...* para exportarlo como PNG.")
