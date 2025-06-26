@@ -195,7 +195,7 @@ st.download_button(
     mime='text/csv'
 )
 
-# --------- MAPA COROPLÉTICO FUNCIONAL (sin Ceuta ni Melilla) ---------
+# --------- MAPA COROPLÉTICO FUNCIONAL (sin Ceuta, Melilla, Canarias, Madrid, La Rioja, Navarra, Murcia) ---------
 import plotly.graph_objects as go
 
 st.markdown("---")
@@ -221,7 +221,6 @@ columnas_euro = {
     "Aragón": "RentaAnualNetaMediaAragon",
     "Asturias": "RentaAnualNetaMediaAsturias",
     "Baleares": "RentaAnualNetaMediaBaleares",
-    "Canarias": "RentaAnualNetaMediaCanarias",
     "Cantabria": "RentaAnualNetaMediaCantabria",
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
     "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamancha",
@@ -229,11 +228,7 @@ columnas_euro = {
     "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
-    "Madrid": "RentaAnualNetaMediaMadrid",
-    "Murcia": "RentaAnualNetaMediaMurcia",
-    "Navarra": "RentaAnualNetaMediaNavarra",
-    "País Vasco": "RentaAnualNetaMediaPaisVasco",
-    "La Rioja": "RentaAnualNetaMediaRioja"
+    "País Vasco": "RentaAnualNetaMediaPaisVasco"
 }
 columnas_pct = {k: v + "Base2010" for k, v in columnas_euro.items()}
 columnas_usar = columnas_euro if tipo_valor == "Valores absolutos (€)" else columnas_pct
@@ -246,7 +241,7 @@ datos_mapa = pd.DataFrame({
     "Valor": [df_año[col].values[0] if col in df_año.columns and not df_año[col].isnull().all() else None for col in columnas_usar.values()]
 }).dropna(subset=['Valor'])
 
-# GEOJSON sin Ceuta ni Melilla
+# GEOJSON limpio (solo comunidades sin problemas)
 geojson_data = {
     "type": "FeatureCollection",
     "features": [
@@ -254,7 +249,6 @@ geojson_data = {
         {"type": "Feature", "properties": {"name": "Aragón"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.5, 40.0], [0.5, 40.0], [0.5, 42.5], [-1.5, 42.5], [-1.5, 40.0]]]}},
         {"type": "Feature", "properties": {"name": "Asturias"}, "geometry": {"type": "Polygon", "coordinates": [[[-6.5, 43.0], [-4.5, 43.0], [-4.5, 43.8], [-6.5, 43.8], [-6.5, 43.0]]]}},
         {"type": "Feature", "properties": {"name": "Baleares"}, "geometry": {"type": "Polygon", "coordinates": [[[1.5, 38.5], [4.5, 38.5], [4.5, 40.0], [1.5, 40.0], [1.5, 38.5]]]}},
-        {"type": "Feature", "properties": {"name": "Canarias"}, "geometry": {"type": "Polygon", "coordinates": [[[-17.0, 27.5], [-13.0, 27.5], [-13.0, 29.5], [-17.0, 29.5], [-17.0, 27.5]]]}},
         {"type": "Feature", "properties": {"name": "Cantabria"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 42.5], [-3.5, 42.5], [-3.5, 43.5], [-4.5, 43.5], [-4.5, 42.5]]]}},
         {"type": "Feature", "properties": {"name": "Castilla y León"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.0, 40.0], [-1.0, 40.0], [-1.0, 43.0], [-7.0, 43.0], [-7.0, 40.0]]]}},
         {"type": "Feature", "properties": {"name": "Castilla-La Mancha"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 38.0], [-1.0, 38.0], [-1.0, 40.5], [-4.5, 40.5], [-4.5, 38.0]]]}},
@@ -262,15 +256,11 @@ geojson_data = {
         {"type": "Feature", "properties": {"name": "Comunidad Valenciana"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0, 37.5], [0.5, 37.5], [0.5, 40.5], [-1.0, 40.5], [-1.0, 37.5]]]}},
         {"type": "Feature", "properties": {"name": "Extremadura"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 38.0], [-4.0, 38.0], [-4.0, 40.5], [-7.5, 40.5], [-7.5, 38.0]]]}},
         {"type": "Feature", "properties": {"name": "Galicia"}, "geometry": {"type": "Polygon", "coordinates": [[[-9.0, 41.5], [-6.5, 41.5], [-6.5, 44.0], [-9.0, 44.0], [-9.0, 41.5]]]}},
-        {"type": "Feature", "properties": {"name": "Madrid"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.1, 40.2], [-3.3, 40.2], [-3.3, 40.6], [-4.1, 40.6], [-4.1, 40.2]]]}},
-        {"type": "Feature", "properties": {"name": "Murcia"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.5, 37.5], [-0.5, 37.5], [-0.5, 38.5], [-1.5, 38.5], [-1.5, 37.5]]]}},
-        {"type": "Feature", "properties": {"name": "Navarra"}, "geometry": {"type": "Polygon", "coordinates": [[[-2.0, 42.5], [-1.2, 42.5], [-1.2, 43.0], [-2.0, 43.0], [-2.0, 42.5]]]}},
-        {"type": "Feature", "properties": {"name": "País Vasco"}, "geometry": {"type": "Polygon", "coordinates": [[[-3.0, 42.5], [-1.5, 42.5], [-1.5, 43.5], [-3.0, 43.5], [-3.0, 42.5]]]}},
-        {"type": "Feature", "properties": {"name": "La Rioja"}, "geometry": {"type": "Polygon", "coordinates": [[[-2.6, 42.3], [-1.8, 42.3], [-1.8, 42.8], [-2.6, 42.8], [-2.6, 42.3]]]}},
+        {"type": "Feature", "properties": {"name": "País Vasco"}, "geometry": {"type": "Polygon", "coordinates": [[[-3.0, 42.5], [-1.5, 42.5], [-1.5, 43.5], [-3.0, 43.5], [-3.0, 42.5]]]}}
     ]
 }
 
-# Mapa
+# Crear figura
 min_val = datos_mapa['Valor'].min()
 max_val = datos_mapa['Valor'].max()
 rango = [min_val - 0.05*(max_val - min_val), max_val + 0.05*(max_val - min_val)]
@@ -312,6 +302,7 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+# Botón de descarga
 csv_map = datos_mapa.copy()
 csv_map.insert(0, "Año", año_seleccionado)
 st.download_button(
