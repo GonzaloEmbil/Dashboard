@@ -14,12 +14,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título principal
-st.title("📈 Renta Anual Neta Media")
+st.title("Dashboard Interactivo para la Renta Anual Neta Media en España")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
 
 # --- Selector para gráfico de grupos de edad ---
+st.subheader("📈 Renta Anual Neta Media por Grupo de Edad")
+
 vista_edad = st.selectbox(
     "Selecciona el tipo de visualización para grupos de edad:",
     options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
@@ -27,7 +29,6 @@ vista_edad = st.selectbox(
     key="vista_edad"
 )
 
-# Diccionarios columnas según vista
 columnas_valores = {
     'Total': 'RentaAnualNetaMedia',
     '65 o más': 'RentaAnualNetaMedia65',
@@ -51,14 +52,12 @@ colores = {
     '16-29': 'gray'
 }
 
-# Selección de grupos de edad
 seleccion = st.multiselect(
     "Selecciona los grupos de edad:",
     options=list(columnas_valores.keys()),
     default=list(columnas_valores.keys())
 )
 
-# Asignar columnas según selección de vista
 if vista_edad == "Valores absolutos (€)":
     columnas = columnas_valores
     yaxis_title_edad = "Renta (€)"
@@ -70,7 +69,6 @@ else:
     y_range_edad = [80, 120]
     hover_fmt_edad = "%{y:.1f} %"
 
-# Crear figura grupos de edad
 fig_edad = go.Figure()
 
 for grupo in seleccion:
@@ -86,7 +84,6 @@ for grupo in seleccion:
     ))
 
 fig_edad.update_layout(
-    title="Renta anual neta media por grupos de edad",
     xaxis=dict(
         title="Año",
         title_font=dict(color="black"),
@@ -117,11 +114,12 @@ fig_edad.update_layout(
 
 st.plotly_chart(fig_edad, use_container_width=True)
 
-# --- Separador ---
+# Separador
 st.markdown("---")
-st.subheader("Renta anual neta media por sexo")
 
-# Selector para gráfico por sexo
+# --- Segundo gráfico ---
+st.subheader("👥 Renta Anual Neta Media por Sexo")
+
 vista_sexo = st.selectbox(
     "Selecciona el tipo de visualización para sexo:",
     options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
@@ -129,7 +127,6 @@ vista_sexo = st.selectbox(
     key="vista_sexo"
 )
 
-# Columnas según vista para sexo
 if vista_sexo == "Valores absolutos (€)":
     hombres_col = 'RentaAnualNetaMediaHombres'
     mujeres_col = 'RentaAnualNetaMediaMujeres'
@@ -145,7 +142,6 @@ else:
     hover_h = "Hombres: %{y:.1f} %"
     hover_m = "Mujeres: %{y:.1f} %"
 
-# Crear figura sexo
 fig_sexo = go.Figure()
 
 fig_sexo.add_trace(go.Scatter(
@@ -167,7 +163,6 @@ fig_sexo.add_trace(go.Scatter(
 ))
 
 fig_sexo.update_layout(
-    title="Evolución de la renta por sexo",
     xaxis=dict(
         title="Año",
         title_font=dict(color="black"),
