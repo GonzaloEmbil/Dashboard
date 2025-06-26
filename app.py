@@ -56,8 +56,23 @@ for grupo in seleccion:
 # Configurar diseño del gráfico
 fig.update_layout(
     title="📈 Renta Anual Neta Media por Grupo de Edad",
-    xaxis_title="Año",
-    yaxis_title="Renta (€)",
+    xaxis=dict(
+        title="Año",
+        title_font=dict(color="black"),
+        tickfont=dict(color="black"),
+        color="black",
+        showgrid=True,
+        gridcolor="lightgray"
+    ),
+    yaxis=dict(
+        title="Renta (€)",
+        title_font=dict(color="black"),
+        tickfont=dict(color="black"),
+        color="black",
+        showgrid=True,
+        gridcolor="lightgray",
+        range=[8000, 18000]
+    ),
     template="simple_white",
     plot_bgcolor='#fafafa',
     paper_bgcolor='#ffffff',
@@ -66,6 +81,7 @@ fig.update_layout(
     hovermode='x unified',
     height=550
 )
+
 
 # Ejes en color negro y con grilla clara
 fig.update_xaxes(color="black", showgrid=True, gridcolor="lightgray")
