@@ -195,9 +195,9 @@ st.download_button(
     mime='text/csv'
 )
 
-# --------- MAPA COROPLÉTICO CON GEOJSON CORREGIDO ---------
+# --------- MAPA COROPLÉTICO FUNCIONAL ---------
 import plotly.express as px
-import json
+import plotly.graph_objects as go
 
 st.markdown("---")
 st.subheader("🗺️ Mapa Coroplético de la Renta por Comunidad Autónoma")
@@ -219,7 +219,7 @@ año_seleccionado = st.selectbox(
     key="año_mapa"
 )
 
-# Diccionario de columnas con nombres normalizados para el GeoJSON
+# Diccionario de columnas con nombres normalizados
 columnas_euro = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
@@ -262,81 +262,80 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# GEOJSON CORREGIDO CON FORMATO ADECUADO
+# Mostrar datos para depuración
+st.write("Datos usados en el mapa:", datos_mapa)
+
+# GEOJSON SIMPLIFICADO PERO FUNCIONAL
 geojson_data = {
     "type": "FeatureCollection",
     "features": [
-        # Geometrías simplificadas pero con formato correcto
-        {"type": "Feature", "properties": {"name": "Andalucía"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5,36.2],[-4.5,38.8],[-7.1,38.8],[-7.1,36.2],[-4.5,36.2]]]}},
-        {"type": "Feature", "properties": {"name": "Aragón"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0,40.2],[-1.0,42.8],[0.5,42.8],[0.5,40.2],[-1.0,40.2]]]}},
-        {"type": "Feature", "properties": {"name": "Asturias"}, "geometry": {"type": "Polygon", "coordinates": [[[-6.0,43.0],[-6.0,43.8],[-5.0,43.8],[-5.0,43.0],[-6.0,43.0]]]}},
-        {"type": "Feature", "properties": {"name": "Baleares"}, "geometry": {"type": "Polygon", "coordinates": [[[1.5,38.5],[4.5,38.5],[4.5,40.0],[1.5,40.0],[1.5,38.5]]]}},
-        {"type": "Feature", "properties": {"name": "Canarias"}, "geometry": {"type": "MultiPolygon", "coordinates": [
-            [[[-15.6,28.1],[-15.6,28.8],[-16.3,28.8],[-16.3,28.1],[-15.6,28.1]]],  # Tenerife
-            [[[-13.5,29.0],[-13.5,29.4],[-13.9,29.4],[-13.9,29.0],[-13.5,29.0]]]   # Gran Canaria
-        ]}},
-        {"type": "Feature", "properties": {"name": "Cantabria"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5,42.8],[-3.5,42.8],[-3.5,43.5],[-4.5,43.5],[-4.5,42.8]]]}},
-        {"type": "Feature", "properties": {"name": "Castilla y León"}, "geometry": {"type": "Polygon", "coordinates": [[[-6.5,40.5],[-6.5,43.0],[-1.0,43.0],[-1.0,40.5],[-6.5,40.5]]]}},
-        {"type": "Feature", "properties": {"name": "Castilla-La Mancha"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.0,38.5],[-1.0,38.5],[-1.0,40.5],[-4.0,40.5],[-4.0,38.5]]]}},
-        {"type": "Feature", "properties": {"name": "Cataluña"}, "geometry": {"type": "Polygon", "coordinates": [[[0.0,40.5],[3.5,40.5],[3.5,42.5],[0.0,42.5],[0.0,40.5]]]}},
-        {"type": "Feature", "properties": {"name": "C. Valenciana"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0,38.0],[0.5,38.0],[0.5,40.5],[-1.0,40.5],[-1.0,38.0]]]}},
-        {"type": "Feature", "properties": {"name": "Extremadura"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5,38.0],[-7.5,40.5],[-4.0,40.5],[-4.0,38.0],[-7.5,38.0]]]}},
-        {"type": "Feature", "properties": {"name": "Galicia"}, "geometry": {"type": "Polygon", "coordinates": [[[-9.0,41.5],[-6.5,41.5],[-6.5,44.0],[-9.0,44.0],[-9.0,41.5]]]}},
-        {"type": "Feature", "properties": {"name": "Madrid"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.2,39.9],[-3.2,39.9],[-3.2,40.8],[-4.2,40.8],[-4.2,39.9]]]}},
-        {"type": "Feature", "properties": {"name": "Murcia"}, "geometry": {"type": "Polygon", "coordinates": [[[-2.0,37.5],[-0.5,37.5],[-0.5,38.5],[-2.0,38.5],[-2.0,37.5]]]}},
-        {"type": "Feature", "properties": {"name": "Navarra"}, "geometry": {"type": "Polygon", "coordinates": [[[-2.0,42.0],[-1.0,42.0],[-1.0,43.0],[-2.0,43.0],[-2.0,42.0]]]}},
-        {"type": "Feature", "properties": {"name": "País Vasco"}, "geometry": {"type": "Polygon", "coordinates": [[[-3.0,42.5],[-1.5,42.5],[-1.5,43.5],[-3.0,43.5],[-3.0,42.5]]]}},
-        {"type": "Feature", "properties": {"name": "La Rioja"}, "geometry": {"type": "Polygon", "coordinates": [[[-2.8,42.0],[-1.8,42.0],[-1.8,42.5],[-2.8,42.5],[-2.8,42.0]]]}},
+        {"type": "Feature", "properties": {"name": "Andalucía"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 36.0], [-1.5, 36.0], [-1.5, 38.5], [-7.5, 38.5], [-7.5, 36.0]]}},
+        {"type": "Feature", "properties": {"name": "Aragón"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.5, 40.0], [0.5, 40.0], [0.5, 42.5], [-1.5, 42.5], [-1.5, 40.0]]}},
+        {"type": "Feature", "properties": {"name": "Asturias"}, "geometry": {"type": "Polygon", "coordinates": [[[-6.5, 43.0], [-4.5, 43.0], [-4.5, 43.8], [-6.5, 43.8], [-6.5, 43.0]]}},
+        {"type": "Feature", "properties": {"name": "Baleares"}, "geometry": {"type": "Polygon", "coordinates": [[[1.5, 38.5], [4.5, 38.5], [4.5, 40.0], [1.5, 40.0], [1.5, 38.5]]}},
+        {"type": "Feature", "properties": {"name": "Canarias"}, "geometry": {"type": "Point", "coordinates": [-15.5, 28.0]}},
+        {"type": "Feature", "properties": {"name": "Cantabria"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 42.5], [-3.5, 42.5], [-3.5, 43.5], [-4.5, 43.5], [-4.5, 42.5]]}},
+        {"type": "Feature", "properties": {"name": "Castilla y León"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.0, 40.0], [-1.0, 40.0], [-1.0, 43.0], [-7.0, 43.0], [-7.0, 40.0]]}},
+        {"type": "Feature", "properties": {"name": "Castilla-La Mancha"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 38.0], [-1.0, 38.0], [-1.0, 40.5], [-4.5, 40.5], [-4.5, 38.0]]}},
+        {"type": "Feature", "properties": {"name": "Cataluña"}, "geometry": {"type": "Polygon", "coordinates": [[[0.0, 40.0], [3.5, 40.0], [3.5, 42.5], [0.0, 42.5], [0.0, 40.0]]}},
+        {"type": "Feature", "properties": {"name": "C. Valenciana"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0, 37.5], [0.5, 37.5], [0.5, 40.5], [-1.0, 40.5], [-1.0, 37.5]]}},
+        {"type": "Feature", "properties": {"name": "Extremadura"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 38.0], [-4.0, 38.0], [-4.0, 40.5], [-7.5, 40.5], [-7.5, 38.0]]}},
+        {"type": "Feature", "properties": {"name": "Galicia"}, "geometry": {"type": "Polygon", "coordinates": [[[-9.0, 41.5], [-6.5, 41.5], [-6.5, 44.0], [-9.0, 44.0], [-9.0, 41.5]]}},
+        {"type": "Feature", "properties": {"name": "Madrid"}, "geometry": {"type": "Point", "coordinates": [-3.7, 40.4]}},
+        {"type": "Feature", "properties": {"name": "Murcia"}, "geometry": {"type": "Point", "coordinates": [-1.1, 37.9]}},
+        {"type": "Feature", "properties": {"name": "Navarra"}, "geometry": {"type": "Point", "coordinates": [-1.6, 42.8]}},
+        {"type": "Feature", "properties": {"name": "País Vasco"}, "geometry": {"type": "Polygon", "coordinates": [[[-3.0, 42.5], [-1.5, 42.5], [-1.5, 43.5], [-3.0, 43.5], [-3.0, 42.5]]}},
+        {"type": "Feature", "properties": {"name": "La Rioja"}, "geometry": {"type": "Point", "coordinates": [-2.4, 42.4]}},
         {"type": "Feature", "properties": {"name": "Ceuta"}, "geometry": {"type": "Point", "coordinates": [-5.3, 35.9]}},
         {"type": "Feature", "properties": {"name": "Melilla"}, "geometry": {"type": "Point", "coordinates": [-2.9, 35.3]}}
     ]
 }
 
-# Crear el mapa coroplético
+# SOLUCIÓN DEFINITIVA: Crear el mapa manualmente con go.Choropleth
 try:
-    fig = px.choropleth(
-        datos_mapa,
+    # Calcular rango de colores
+    min_val = datos_mapa['Valor'].min()
+    max_val = datos_mapa['Valor'].max()
+    rango = [min_val - 0.05*(max_val-min_val), max_val + 0.05*(max_val-min_val)]
+    
+    fig = go.Figure(go.Choropleth(
         geojson=geojson_data,
-        locations='Comunidad Autónoma',
-        featureidkey='properties.name',
-        color='Valor',
-        color_continuous_scale='YlGnBu',
-        range_color=(datos_mapa['Valor'].min() * 0.95, datos_mapa['Valor'].max() * 1.05),
-        labels={'Valor': titulo_color},
-        title=f"Renta Anual Neta Media - {año_seleccionado}"
-    )
+        locations=datos_mapa['Comunidad Autónoma'],
+        z=datos_mapa['Valor'],
+        featureidkey="properties.name",
+        colorscale='YlGnBu',
+        marker_line_width=0.5,
+        marker_line_color='white',
+        colorbar=dict(
+            title=titulo_color,
+            tickfont=dict(color="white"),
+            title_font=dict(color="white")
+        ),
+        zmin=rango[0],
+        zmax=rango[1],
+        hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
+    ))
     
     # Configuración avanzada del mapa
     fig.update_geos(
         fitbounds="locations",
         visible=False,
-        center={"lat": 40.0, "lon": -4.0},
+        center=dict(lat=40.0, lon=-4.0),
         projection_scale=5.5,
         showcountries=True,
         countrycolor="white",
         showsubunits=True,
-        subunitcolor="rgba(255,255,255,0.5)",
+        subunitcolor="rgba(255,255,255,0.3)",
         bgcolor='rgba(0,0,0,0)'
     )
     
     fig.update_layout(
+        title=f"Renta Anual Neta Media - {año_seleccionado}",
         plot_bgcolor='#0e1117',
         paper_bgcolor='#0e1117',
         font=dict(color="white", family="Arial"),
         margin=dict(l=0, r=0, t=50, b=0),
-        coloraxis_colorbar=dict(
-            title=titulo_color,
-            tickfont=dict(color="white"),
-            title_font=dict(color="white", size=14),
-            len=0.75
-        ),
         height=600
-    )
-    
-    fig.update_traces(
-        hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>",
-        marker_line_width=0.5,
-        marker_line_color="white"
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -364,7 +363,7 @@ st.download_button(
 # Notas explicativas
 st.markdown("""
 **Notas:**
-- El mapa muestra los valores de renta neta anual media
+- Comunidades pequeñas se muestran como puntos para mejor visualización
 - Las zonas más claras indican valores más altos
-- Ceuta y Melilla se muestran como puntos
+- El mapa muestra la distribución geográfica de la renta neta anual media
 """)
