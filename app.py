@@ -197,13 +197,15 @@ st.download_button(
 
 # --------- MAPA INTERACTIVO ---------
 import plotly.express as px
+import json
+import requests
 
 st.markdown("---")
-st.subheader("🗺️ Mapa Interactivo de la Renta Anual Neta Media por Comunidad Autónoma")
+st.subheader("🗺️ Mapa Coroplético de la Renta por Comunidad Autónoma")
 
 # Selección de visualización
 tipo_valor = st.selectbox(
-    "Selecciona el tipo de dato a visualizar:",
+    "Tipo de dato:",
     options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
     index=0,
     key="vista_mapa"
@@ -218,12 +220,12 @@ año_seleccionado = st.selectbox(
     key="año_mapa"
 )
 
-# Diccionario de columnas
+# Diccionario de columnas con nombres normalizados para coincidir con el GeoJSON
 columnas_euro = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
-    "Asturias": "RentaAnualNetaMediaAsturias",
-    "Baleares": "RentaAnualNetaMediaBaleares",
+    "Principado de Asturias": "RentaAnualNetaMediaAsturias",
+    "Islas Baleares": "RentaAnualNetaMediaBaleares",
     "Canarias": "RentaAnualNetaMediaCanarias",
     "Cantabria": "RentaAnualNetaMediaCantabria",
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
@@ -232,9 +234,9 @@ columnas_euro = {
     "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
-    "Madrid": "RentaAnualNetaMediaMadrid",
-    "Murcia": "RentaAnualNetaMediaMurcia",
-    "Navarra": "RentaAnualNetaMediaNavarra",
+    "Comunidad de Madrid": "RentaAnualNetaMediaMadrid",
+    "Región de Murcia": "RentaAnualNetaMediaMurcia",
+    "Comunidad Foral de Navarra": "RentaAnualNetaMediaNavarra",
     "País Vasco": "RentaAnualNetaMediaPaisVasco",
     "La Rioja": "RentaAnualNetaMediaRioja",
     "Ceuta": "RentaAnualNetaMediaCeuta",
@@ -249,7 +251,7 @@ formato_hover = ".0f" if tipo_valor == "Valores absolutos (€)" else ".1f"
 # Filtrar datos por año seleccionado
 df_año = df[df["Periodo"] == año_seleccionado].copy()
 
-# Crear datos para el mapa con manejo de valores nulos
+# Crear datos para el mapa
 datos_mapa = pd.DataFrame({
     "Comunidad Autónoma": list(columnas_usar.keys()),
     "Valor": [df_año[col].values[0] if col in df_año.columns and not df_año[col].isnull().all() 
@@ -261,82 +263,99 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# Coordenadas precisas de las capitales de las comunidades autónomas
-coordenadas = {
-    "Andalucía": {"lat": 37.3891, "lon": -5.9845},   # Sevilla
-    "Aragón": {"lat": 41.6561, "lon": -0.8753},       # Zaragoza
-    "Asturias": {"lat": 43.3616, "lon": -5.8494},     # Oviedo
-    "Baleares": {"lat": 39.5696, "lon": 2.6502},      # Palma de Mallorca
-    "Canarias": {"lat": 28.1248, "lon": -15.43},      # Las Palmas de Gran Canaria
-    "Cantabria": {"lat": 43.4623, "lon": -3.80998},   # Santander
-    "Castilla y León": {"lat": 41.6528, "lon": -4.7236}, # Valladolid
-    "Castilla-La Mancha": {"lat": 39.8628, "lon": -4.0273}, # Toledo
-    "Cataluña": {"lat": 41.3825, "lon": 2.1769},      # Barcelona
-    "Comunidad Valenciana": {"lat": 39.407, "lon": -0.5000}, # Valencia
-    "Extremadura": {"lat": 38.881, "lon": -6.9706},   # Mérida
-    "Galicia": {"lat": 42.431, "lon": -8.64435},      # Santiago de Compostela
-    "Madrid": {"lat": 40.4168, "lon": -3.7038},       # Madrid
-    "Murcia": {"lat": 37.9922, "lon": -1.1307},       # Murcia
-    "Navarra": {"lat": 42.8178, "lon": -1.6432},      # Pamplona
-    "País Vasco": {"lat": 42.8467, "lon": -2.6722},   # Vitoria-Gasteiz
-    "La Rioja": {"lat": 42.4627, "lon": -2.44499},    # Logroño
-    "Ceuta": {"lat": 35.8883, "lon": -5.3162},        # Ceuta
-    "Melilla": {"lat": 35.2917, "lon": -2.9383}       # Melilla
-}
+# Cargar GeoJSON desde una fuente confiable
+try:
+    # GeoJSON oficial de España (fuente alternativa)
+    geojson_url = "https://raw.githubusercontent.com/martgnz/spain-geojson/master/spain-comunidades-autonomas.geojson"
+    
+    # Descargar y cargar el GeoJSON
+    response = requests.get(geojson_url)
+    response.raise_for_status()
+    geojson_data = response.json()
+    
+    # Verificar nombres en el GeoJSON
+    nombres_geojson = [feature["properties"]["name"] for feature in geojson_data["features"]]
+    st.info(f"Nombres en GeoJSON: {', '.join(nombres_geojson)}")
+    
+    # Verificar coincidencia de nombres
+    nombres_faltantes = set(datos_mapa["Comunidad Autónoma"]) - set(nombres_geojson)
+    if nombres_faltantes:
+        st.warning(f"⚠️ Nombres no coincidentes: {', '.join(nombres_faltantes)}")
 
-# Agregar coordenadas al DataFrame
-datos_mapa['lat'] = datos_mapa['Comunidad Autónoma'].map(lambda x: coordenadas.get(x, {}).get('lat'))
-datos_mapa['lon'] = datos_mapa['Comunidad Autónoma'].map(lambda x: coordenadas.get(x, {}).get('lon'))
+except Exception as e:
+    st.error(f"Error cargando GeoJSON: {str(e)}")
+    st.stop()
 
-# Crear mapa de burbujas interactivo
-fig = px.scatter_mapbox(
-    datos_mapa,
-    lat='lat',
-    lon='lon',
-    size='Valor',
-    color='Valor',
-    hover_name='Comunidad Autónoma',
-    hover_data={'Valor': True, 'lat': False, 'lon': False},
-    zoom=4.5,
-    center={"lat": 40.0, "lon": -4.0},
-    mapbox_style="carto-darkmatter",
-    color_continuous_scale="YlGnBu",
-    title=f"Renta Anual Neta Media - {año_seleccionado}",
-    size_max=30
-)
-
-fig.update_layout(
-    plot_bgcolor='#0e1117',
-    paper_bgcolor='#0e1117',
-    font=dict(color="white"),
-    margin=dict(l=0, r=0, t=50, b=0),
-    mapbox=dict(
-        style="carto-darkmatter",
-        center=dict(lat=40.0, lon=-4.0),
-        zoom=4.5
+# Crear el mapa coroplético
+try:
+    fig = px.choropleth(
+        datos_mapa,
+        geojson=geojson_data,
+        locations='Comunidad Autónoma',
+        featureidkey='properties.name',
+        color='Valor',
+        color_continuous_scale='YlGnBu',
+        range_color=(datos_mapa['Valor'].min() * 0.95, datos_mapa['Valor'].max() * 1.05),
+        labels={'Valor': titulo_color},
+        title=f"Renta Anual Neta Media - {año_seleccionado}"
     )
-)
-
-# Formatear el texto del hover
-if tipo_valor == "Valores absolutos (€)":
+    
+    # Configuración avanzada del mapa
+    fig.update_geos(
+        fitbounds="locations",
+        visible=False,
+        resolution=50,
+        showcountries=True,
+        countrycolor="white",
+        showsubunits=True,
+        subunitcolor="rgba(255,255,255,0.5)"
+    )
+    
+    fig.update_layout(
+        plot_bgcolor='#0e1117',
+        paper_bgcolor='#0e1117',
+        font=dict(color="white", family="Arial"),
+        margin=dict(l=0, r=0, t=50, b=0),
+        coloraxis_colorbar=dict(
+            title=titulo_color,
+            tickfont=dict(color="white"),
+            title_font=dict(color="white", size=14)
+        ),
+        height=700
+    )
+    
     fig.update_traces(
-        hovertemplate="<b>%{hovertext}</b><br>Renta: %{marker.size:,.0f} €<extra></extra>",
-        marker=dict(sizemode='diameter')
+        hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>",
+        marker_line_width=0.5,
+        marker_line_color="white"
     )
-else:
-    fig.update_traces(
-        hovertemplate="<b>%{hovertext}</b><br>Índice: %{marker.size:.1f} %<extra></extra>",
-        marker=dict(sizemode='diameter')
-    )
+    
+    st.plotly_chart(fig, use_container_width=True)
 
-st.plotly_chart(fig, use_container_width=True)
+except Exception as e:
+    st.error(f"Error creando el mapa: {str(e)}")
+    
+    # Mostrar datos en tabla como alternativa
+    st.subheader("Datos por Comunidad Autónoma")
+    st.dataframe(
+        datos_mapa.style.format({"Valor": "{:,.0f} €" if tipo_valor == "Valores absolutos (€)" else "{:,.1f} %"}),
+        height=400
+    )
 
 # Botón de descarga
 csv_map = datos_mapa.copy()
 csv_map.insert(0, "Año", año_seleccionado)
 st.download_button(
-    label="⬇️ Descargar CSV con los datos del mapa",
+    label="⬇️ Descargar datos completos",
     data=csv_map.to_csv(index=False).encode("utf-8"),
-    file_name="renta_mapa_comunidades.csv",
+    file_name="renta_comunidades.csv",
     mime="text/csv"
 )
+
+# Notas explicativas
+st.markdown("""
+**Notas:**
+- El mapa muestra los valores de renta neta anual media
+- Las zonas más claras indican valores más altos
+- Los datos incluyen todas las comunidades autónomas españolas
+""")
