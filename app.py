@@ -113,7 +113,7 @@ st.plotly_chart(fig_edad, use_container_width=True, config={
 df_descarga_edad = df[['Periodo'] + [columnas[grupo] for grupo in seleccion]]
 csv_edad = df_descarga_edad.to_csv(index=False).encode('utf-8')
 st.download_button(
-    label="⬇️ Descargar datos seleccionados (Edad)",
+    label="⬇️ Descargar CSV con los datos seleccionados",
     data=csv_edad,
     file_name="renta_por_edad.csv",
     mime='text/csv'
@@ -189,7 +189,7 @@ st.plotly_chart(fig_sexo, use_container_width=True, config={
 df_descarga_sexo = df[['Periodo', hombres_col, mujeres_col]]
 csv_sexo = df_descarga_sexo.to_csv(index=False).encode('utf-8')
 st.download_button(
-    label="⬇️ Descargar datos por sexo",
+    label="⬇️ Descargar CSV con los datos seleccionados",
     data=csv_sexo,
     file_name="renta_por_sexo.csv",
     mime='text/csv'
