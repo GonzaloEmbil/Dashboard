@@ -14,7 +14,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título principal
-st.title("📈 Renta Anual Neta Media por Grupo de Edad")
+st.title("📈 Renta Anual Neta Media")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
@@ -86,7 +86,7 @@ for grupo in seleccion:
     ))
 
 fig_edad.update_layout(
-    title="📈 Renta Anual Neta Media por Grupo de Edad",
+    title="Renta anual neta media por grupos de edad",
     xaxis=dict(
         title="Año",
         title_font=dict(color="black"),
@@ -119,7 +119,7 @@ st.plotly_chart(fig_edad, use_container_width=True)
 
 # --- Separador ---
 st.markdown("---")
-st.subheader("👥 Renta Anual Neta Media por Sexo")
+st.subheader("Renta anual neta media por sexo")
 
 # Selector para gráfico por sexo
 vista_sexo = st.selectbox(
@@ -167,7 +167,7 @@ fig_sexo.add_trace(go.Scatter(
 ))
 
 fig_sexo.update_layout(
-    title="📊 Evolución de la Renta por Sexo",
+    title="Evolución de la renta por sexo",
     xaxis=dict(
         title="Año",
         title_font=dict(color="black"),
