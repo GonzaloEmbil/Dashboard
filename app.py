@@ -58,7 +58,7 @@ fig.update_layout(
     title="📈 Renta Anual Neta Media por Grupo de Edad",
     xaxis_title="Año",
     yaxis_title="Renta (€)",
-    template="simple_white",
+    template="simple_black",
     plot_bgcolor='#fafafa',
     paper_bgcolor='#ffffff',
     font=dict(family="Segoe UI", size=14, color="black"),
