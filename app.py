@@ -265,7 +265,7 @@ if datos_mapa.empty:
 # SOLUCIÓN ALTERNATIVA: Descargar el GeoJSON y usarlo directamente
 try:
     # Descargar el GeoJSON
-    geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
+    geojson_url = "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/spain/spain-comunidad-with-canary-islands.json"
     response = requests.get(geojson_url)
     geojson_data = response.json()
     
