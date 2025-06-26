@@ -60,7 +60,7 @@ fig.update_layout(
     yaxis_title="Renta (€)",
     template="simple_white",
     plot_bgcolor='#fafafa',
-    paper_bgcolor='black',
+    paper_bgcolor='#ffffff',
     font=dict(family="Segoe UI", size=14, color="black"),
     legend=dict(orientation="h", y=-0.2),
     hovermode='x unified',
