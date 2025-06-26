@@ -197,6 +197,7 @@ st.download_button(
 
 # --------- MAPA INTERACTIVO ---------
 import plotly.express as px
+import requests
 
 st.markdown("---")
 st.subheader("🗺️ Mapa Interactivo de la Renta Anual Neta Media por Comunidad Autónoma")
@@ -261,15 +262,22 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# URL GeoJSON
-geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
-
-# SOLUCIÓN CORRECTA PARA EL COLORBAR (usando sintaxis actualizada)
+# SOLUCIÓN ALTERNATIVA: Descargar el GeoJSON y usarlo directamente
 try:
-    # Crear el mapa
+    # Descargar el GeoJSON
+    geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
+    response = requests.get(geojson_url)
+    geojson_data = response.json()
+    
+    # Verificar los nombres de las comunidades en el GeoJSON
+    nombres_geojson = [feature['properties']['name'] for feature in geojson_data['features']]
+    st.write("Nombres de comunidades en GeoJSON:", nombres_geojson)
+    st.write("Nombres en nuestros datos:", datos_mapa['Comunidad Autónoma'].tolist())
+    
+    # Crear el mapa con el GeoJSON descargado
     fig_mapa = px.choropleth(
         datos_mapa,
-        geojson=geojson_url,
+        geojson=geojson_data,
         featureidkey="properties.name",
         locations="Comunidad Autónoma",
         color="Valor",
@@ -279,7 +287,8 @@ try:
         range_color=(datos_mapa['Valor'].min() * 0.9, datos_mapa['Valor'].max() * 1.1)
     )
     
-    # Configuración básica del layout
+    # Configuración básica
+    fig_mapa.update_geos(fitbounds="locations", visible=False)
     fig_mapa.update_layout(
         plot_bgcolor='#0e1117',
         paper_bgcolor='#0e1117',
@@ -287,16 +296,15 @@ try:
         margin=dict(l=0, r=0, t=50, b=0)
     )
     
-    # Configuración CORRECTA del colorbar
+    # Configuración del colorbar
     fig_mapa.update_coloraxes(
         colorbar=dict(
             title=titulo_color,
             tickfont=dict(color="white"),
-            title_font=dict(color="white")  # Cambio clave aquí: title_font en lugar de titlefont
+            title_font=dict(color="white")
         )
     )
     
-    fig_mapa.update_geos(fitbounds="locations", visible=False)
     fig_mapa.update_traces(
         hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
     )
@@ -305,13 +313,36 @@ try:
 
 except Exception as e:
     st.error(f"Error al crear el mapa: {str(e)}")
+    
     # Mostrar los datos en una tabla como alternativa
     st.subheader("Tabla de Datos por Comunidad Autónoma")
     st.dataframe(
         datos_mapa.style.format({"Valor": "{:,.0f} €" if tipo_valor == "Valores absolutos (€)" else "{:,.1f} %"}),
         height=400
     )
-    st.stop()
+    
+    # Intentar crear un mapa más simple sin GeoJSON
+    st.subheader("Visualización Alternativa: Mapa de Calor")
+    try:
+        fig_simple = px.choropleth(
+            datos_mapa,
+            locationmode="country names",
+            locations="Comunidad Autónoma",
+            color="Valor",
+            scope="europe",
+            color_continuous_scale="YlGnBu",
+            labels={"Valor": titulo_color},
+            title=f"Renta Anual Neta Media - {año_seleccionado}"
+        )
+        fig_simple.update_layout(
+            geo=dict(
+                center=dict(lat=40, lon=-4),
+                projection_scale=6
+            )
+        )
+        st.plotly_chart(fig_simple, use_container_width=True)
+    except:
+        st.warning("No se pudo crear ninguna visualización del mapa.")
 
 # Botón de descarga
 csv_map = datos_mapa.copy()
