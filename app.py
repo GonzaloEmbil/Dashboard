@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard de Renta", layout="wide")
 
-# Estilo global en negro
+# Estilo global para texto negro
 st.markdown("""
     <style>
     body, label, .css-1aumxhk, .stText, .stSelectbox, .stMultiSelect, .stMarkdown {
@@ -19,14 +19,15 @@ st.title("📈 Renta Anual Neta Media por Grupo de Edad")
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
 
-# Selector tipo de visualización
-vista = st.selectbox(
-    "Selecciona el tipo de visualización:",
+# --- Selector para gráfico de grupos de edad ---
+vista_edad = st.selectbox(
+    "Selecciona el tipo de visualización para grupos de edad:",
     options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
-    index=0
+    index=0,
+    key="vista_edad"
 )
 
-# Columnas por grupo
+# Diccionarios columnas según vista
 columnas_valores = {
     'Total': 'RentaAnualNetaMedia',
     '65 o más': 'RentaAnualNetaMedia65',
@@ -41,6 +42,7 @@ columnas_porcentaje = {
     '30-44': 'RentaAnualNetaMedia30_44Base2010',
     '16-29': 'RentaAnualNetaMedia16_29Base2010'
 }
+
 colores = {
     'Total': 'green',
     '65 o más': 'purple',
@@ -49,96 +51,149 @@ colores = {
     '16-29': 'gray'
 }
 
-# Dropdown para seleccionar grupos
+# Selección de grupos de edad
 seleccion = st.multiselect(
     "Selecciona los grupos de edad:",
     options=list(columnas_valores.keys()),
     default=list(columnas_valores.keys())
 )
 
-# Crear gráfico principal
-fig = go.Figure()
-
-# Configurar vista
-if vista == "Valores absolutos (€)":
+# Asignar columnas según selección de vista
+if vista_edad == "Valores absolutos (€)":
     columnas = columnas_valores
-    yaxis_title = "Renta (€)"
-    y_range = [8000, 18000]
-    hover_format = "%{y:,.0f} €"
+    yaxis_title_edad = "Renta (€)"
+    y_range_edad = [8000, 18000]
+    hover_fmt_edad = "%{y:,.0f} €"
 else:
     columnas = columnas_porcentaje
-    yaxis_title = "Variación desde 2010 (%)"
-    y_range = [80, 120]
-    hover_format = "%{y:.1f} %"
+    yaxis_title_edad = "Variación desde 2010 (%)"
+    y_range_edad = [80, 120]
+    hover_fmt_edad = "%{y:.1f} %"
 
-# Añadir líneas al gráfico
+# Crear figura grupos de edad
+fig_edad = go.Figure()
+
 for grupo in seleccion:
     col = columnas[grupo]
     color = colores[grupo]
-    fig.add_trace(go.Scatter(
+    fig_edad.add_trace(go.Scatter(
         x=df['Periodo'],
         y=df[col],
         mode='lines+markers',
         name=grupo,
         line=dict(color=color, width=2),
-        hovertemplate=f"<b>{grupo}</b><br>Año: %{{x}}<br>Valor: {hover_format}<extra></extra>"
+        hovertemplate=f"<b>{grupo}</b><br>Año: %{{x}}<br>Valor: {hover_fmt_edad}<extra></extra>"
     ))
 
-# Estilo del gráfico
-fig.update_layout(
+fig_edad.update_layout(
     title="📈 Renta Anual Neta Media por Grupo de Edad",
-    xaxis=dict(title="Año", title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray"),
-    yaxis=dict(title=yaxis_title, title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray", range=y_range),
+    xaxis=dict(
+        title="Año",
+        title_font=dict(color="black"),
+        tickfont=dict(color="black"),
+        showgrid=True,
+        gridcolor="lightgray"
+    ),
+    yaxis=dict(
+        title=yaxis_title_edad,
+        title_font=dict(color="black"),
+        tickfont=dict(color="black"),
+        showgrid=True,
+        gridcolor="lightgray",
+        range=y_range_edad if vista_edad != "Valores absolutos (€)" else None
+    ),
     template="none",
     plot_bgcolor='#fafafa',
     paper_bgcolor='#ffffff',
     font=dict(family="Segoe UI", size=14, color="black"),
-    legend=dict(orientation="h", y=-0.2, font=dict(color="black")),
+    legend=dict(
+        orientation="h",
+        y=-0.2,
+        font=dict(color="black")
+    ),
     hovermode='x unified',
     height=550
 )
 
-# Mostrar gráfico principal
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig_edad, use_container_width=True)
 
-# ---------------------------
-# NUEVO GRÁFICO POR SEXO 👇
-# ---------------------------
-
+# --- Separador ---
 st.markdown("---")
 st.subheader("👥 Renta Anual Neta Media por Sexo")
 
+# Selector para gráfico por sexo
+vista_sexo = st.selectbox(
+    "Selecciona el tipo de visualización para sexo:",
+    options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
+    index=0,
+    key="vista_sexo"
+)
+
+# Columnas según vista para sexo
+if vista_sexo == "Valores absolutos (€)":
+    hombres_col = 'RentaAnualNetaMediaHombres'
+    mujeres_col = 'RentaAnualNetaMediaMujeres'
+    yaxis_title_sexo = "Renta (€)"
+    y_range_sexo = [8000, 18000]
+    hover_h = "Hombres: %{y:,.0f} €"
+    hover_m = "Mujeres: %{y:,.0f} €"
+else:
+    hombres_col = 'RentaAnualNetaMediaHombresBase2010'
+    mujeres_col = 'RentaAnualNetaMediaMujeresBase2010'
+    yaxis_title_sexo = "Variación desde 2010 (%)"
+    y_range_sexo = [80, 120]
+    hover_h = "Hombres: %{y:.1f} %"
+    hover_m = "Mujeres: %{y:.1f} %"
+
+# Crear figura sexo
 fig_sexo = go.Figure()
 
-# Añadir barras para Hombres y Mujeres
-fig_sexo.add_trace(go.Bar(
+fig_sexo.add_trace(go.Scatter(
     x=df['Periodo'],
-    y=df['RentaAnualNetaMediaHombres'],
+    y=df[hombres_col],
+    mode='lines+markers',
     name="Hombres",
-    marker_color='royalblue',
-    hovertemplate="Año: %{x}<br>Hombres: %{y:,.0f} €<extra></extra>"
+    line=dict(color='royalblue', width=2),
+    hovertemplate=f"Año: %{{x}}<br>{hover_h}<extra></extra>"
 ))
 
-fig_sexo.add_trace(go.Bar(
+fig_sexo.add_trace(go.Scatter(
     x=df['Periodo'],
-    y=df['RentaAnualNetaMediaMujeres'],
+    y=df[mujeres_col],
+    mode='lines+markers',
     name="Mujeres",
-    marker_color='tomato',
-    hovertemplate="Año: %{x}<br>Mujeres: %{y:,.0f} €<extra></extra>"
+    line=dict(color='tomato', width=2),
+    hovertemplate=f"Año: %{{x}}<br>{hover_m}<extra></extra>"
 ))
 
-# Estilo gráfico de barras
 fig_sexo.update_layout(
-    barmode='group',
-    xaxis=dict(title="Año", title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray"),
-    yaxis=dict(title="Renta (€)", title_font=dict(color="black"), tickfont=dict(color="black"), showgrid=True, gridcolor="lightgray"),
+    title="📊 Evolución de la Renta por Sexo",
+    xaxis=dict(
+        title="Año",
+        title_font=dict(color="black"),
+        tickfont=dict(color="black"),
+        showgrid=True,
+        gridcolor="lightgray"
+    ),
+    yaxis=dict(
+        title=yaxis_title_sexo,
+        title_font=dict(color="black"),
+        tickfont=dict(color="black"),
+        showgrid=True,
+        gridcolor="lightgray",
+        range=y_range_sexo if vista_sexo != "Valores absolutos (€)" else None
+    ),
     template="none",
     plot_bgcolor='#fafafa',
     paper_bgcolor='#ffffff',
     font=dict(family="Segoe UI", size=14, color="black"),
-    legend=dict(orientation="h", y=-0.2, font=dict(color="black")),
+    legend=dict(
+        orientation="h",
+        y=-0.2,
+        font=dict(color="black")
+    ),
+    hovermode='x unified',
     height=500
 )
 
-# Mostrar gráfico de sexo
 st.plotly_chart(fig_sexo, use_container_width=True)
