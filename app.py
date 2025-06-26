@@ -264,9 +264,9 @@ if datos_mapa.empty:
 # URL GeoJSON
 geojson_url = "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-comunidades-autonomas.geojson"
 
-# SOLUCIÓN SIMPLIFICADA PARA EL COLORBAR
+# SOLUCIÓN CORRECTA PARA EL COLORBAR (usando sintaxis actualizada)
 try:
-    # Crear mapa sin especificar el colorbar en el layout
+    # Crear el mapa
     fig_mapa = px.choropleth(
         datos_mapa,
         geojson=geojson_url,
@@ -287,11 +287,14 @@ try:
         margin=dict(l=0, r=0, t=50, b=0)
     )
     
-    # Configuración del colorbar usando un enfoque directo
-    if fig_mapa.layout.coloraxis:
-        fig_mapa.layout.coloraxis.colorbar.title = titulo_color
-        fig_mapa.layout.coloraxis.colorbar.tickfont.color = "white"
-        fig_mapa.layout.coloraxis.colorbar.titlefont.color = "white"
+    # Configuración CORRECTA del colorbar
+    fig_mapa.update_coloraxes(
+        colorbar=dict(
+            title=titulo_color,
+            tickfont=dict(color="white"),
+            title_font=dict(color="white")  # Cambio clave aquí: title_font en lugar de titlefont
+        )
+    )
     
     fig_mapa.update_geos(fitbounds="locations", visible=False)
     fig_mapa.update_traces(
@@ -302,6 +305,12 @@ try:
 
 except Exception as e:
     st.error(f"Error al crear el mapa: {str(e)}")
+    # Mostrar los datos en una tabla como alternativa
+    st.subheader("Tabla de Datos por Comunidad Autónoma")
+    st.dataframe(
+        datos_mapa.style.format({"Valor": "{:,.0f} €" if tipo_valor == "Valores absolutos (€)" else "{:,.1f} %"}),
+        height=400
+    )
     st.stop()
 
 # Botón de descarga
