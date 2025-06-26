@@ -49,7 +49,7 @@ for grupo in seleccion:
         mode='lines+markers',
         name=grupo,
         line=dict(color=color, width=2),
-        hovertemplate=f"<b>{grupo}</b><br>Año: %{x}<br>Renta: %{y:,.0f} €<extra></extra>"
+        hovertemplate=f"<b>{grupo}</b><br>Año: %{{x}}<br>Renta: %{{y:,.0f}} €<extra></extra>"
     ))
 
 fig.update_layout(
