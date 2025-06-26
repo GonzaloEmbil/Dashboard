@@ -195,7 +195,7 @@ st.download_button(
     mime='text/csv'
 )
 
-# --------- MAPA COROPLÉTICO FUNCIONAL ---------
+# --------- MAPA COROPLÉTICO CON GEOJSON CORREGIDO ---------
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -262,29 +262,27 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# Mostrar datos para depuración
-st.write("Datos usados en el mapa:", datos_mapa)
-
-# GEOJSON SIMPLIFICADO PERO FUNCIONAL
+# GEOJSON CORREGIDO CON FORMATO PERFECTO
 geojson_data = {
     "type": "FeatureCollection",
     "features": [
-        {"type": "Feature", "properties": {"name": "Andalucía"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 36.0], [-1.5, 36.0], [-1.5, 38.5], [-7.5, 38.5], [-7.5, 36.0]]}},
-        {"type": "Feature", "properties": {"name": "Aragón"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.5, 40.0], [0.5, 40.0], [0.5, 42.5], [-1.5, 42.5], [-1.5, 40.0]]}},
-        {"type": "Feature", "properties": {"name": "Asturias"}, "geometry": {"type": "Polygon", "coordinates": [[[-6.5, 43.0], [-4.5, 43.0], [-4.5, 43.8], [-6.5, 43.8], [-6.5, 43.0]]}},
-        {"type": "Feature", "properties": {"name": "Baleares"}, "geometry": {"type": "Polygon", "coordinates": [[[1.5, 38.5], [4.5, 38.5], [4.5, 40.0], [1.5, 40.0], [1.5, 38.5]]}},
+        # Todos los polígonos con triple anidamiento correcto
+        {"type": "Feature", "properties": {"name": "Andalucía"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 36.0], [-1.5, 36.0], [-1.5, 38.5], [-7.5, 38.5], [-7.5, 36.0]]]}},
+        {"type": "Feature", "properties": {"name": "Aragón"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.5, 40.0], [0.5, 40.0], [0.5, 42.5], [-1.5, 42.5], [-1.5, 40.0]]]}},
+        {"type": "Feature", "properties": {"name": "Asturias"}, "geometry": {"type": "Polygon", "coordinates": [[[-6.5, 43.0], [-4.5, 43.0], [-4.5, 43.8], [-6.5, 43.8], [-6.5, 43.0]]]}},
+        {"type": "Feature", "properties": {"name": "Baleares"}, "geometry": {"type": "Polygon", "coordinates": [[[1.5, 38.5], [4.5, 38.5], [4.5, 40.0], [1.5, 40.0], [1.5, 38.5]]]}},
         {"type": "Feature", "properties": {"name": "Canarias"}, "geometry": {"type": "Point", "coordinates": [-15.5, 28.0]}},
-        {"type": "Feature", "properties": {"name": "Cantabria"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 42.5], [-3.5, 42.5], [-3.5, 43.5], [-4.5, 43.5], [-4.5, 42.5]]}},
-        {"type": "Feature", "properties": {"name": "Castilla y León"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.0, 40.0], [-1.0, 40.0], [-1.0, 43.0], [-7.0, 43.0], [-7.0, 40.0]]}},
-        {"type": "Feature", "properties": {"name": "Castilla-La Mancha"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 38.0], [-1.0, 38.0], [-1.0, 40.5], [-4.5, 40.5], [-4.5, 38.0]]}},
-        {"type": "Feature", "properties": {"name": "Cataluña"}, "geometry": {"type": "Polygon", "coordinates": [[[0.0, 40.0], [3.5, 40.0], [3.5, 42.5], [0.0, 42.5], [0.0, 40.0]]}},
-        {"type": "Feature", "properties": {"name": "C. Valenciana"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0, 37.5], [0.5, 37.5], [0.5, 40.5], [-1.0, 40.5], [-1.0, 37.5]]}},
-        {"type": "Feature", "properties": {"name": "Extremadura"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 38.0], [-4.0, 38.0], [-4.0, 40.5], [-7.5, 40.5], [-7.5, 38.0]]}},
-        {"type": "Feature", "properties": {"name": "Galicia"}, "geometry": {"type": "Polygon", "coordinates": [[[-9.0, 41.5], [-6.5, 41.5], [-6.5, 44.0], [-9.0, 44.0], [-9.0, 41.5]]}},
+        {"type": "Feature", "properties": {"name": "Cantabria"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 42.5], [-3.5, 42.5], [-3.5, 43.5], [-4.5, 43.5], [-4.5, 42.5]]]}},
+        {"type": "Feature", "properties": {"name": "Castilla y León"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.0, 40.0], [-1.0, 40.0], [-1.0, 43.0], [-7.0, 43.0], [-7.0, 40.0]]]}},
+        {"type": "Feature", "properties": {"name": "Castilla-La Mancha"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 38.0], [-1.0, 38.0], [-1.0, 40.5], [-4.5, 40.5], [-4.5, 38.0]]]}},
+        {"type": "Feature", "properties": {"name": "Cataluña"}, "geometry": {"type": "Polygon", "coordinates": [[[0.0, 40.0], [3.5, 40.0], [3.5, 42.5], [0.0, 42.5], [0.0, 40.0]]]}},
+        {"type": "Feature", "properties": {"name": "C. Valenciana"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0, 37.5], [0.5, 37.5], [0.5, 40.5], [-1.0, 40.5], [-1.0, 37.5]]]}},
+        {"type": "Feature", "properties": {"name": "Extremadura"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 38.0], [-4.0, 38.0], [-4.0, 40.5], [-7.5, 40.5], [-7.5, 38.0]]]}},
+        {"type": "Feature", "properties": {"name": "Galicia"}, "geometry": {"type": "Polygon", "coordinates": [[[-9.0, 41.5], [-6.5, 41.5], [-6.5, 44.0], [-9.0, 44.0], [-9.0, 41.5]]]}},
         {"type": "Feature", "properties": {"name": "Madrid"}, "geometry": {"type": "Point", "coordinates": [-3.7, 40.4]}},
         {"type": "Feature", "properties": {"name": "Murcia"}, "geometry": {"type": "Point", "coordinates": [-1.1, 37.9]}},
         {"type": "Feature", "properties": {"name": "Navarra"}, "geometry": {"type": "Point", "coordinates": [-1.6, 42.8]}},
-        {"type": "Feature", "properties": {"name": "País Vasco"}, "geometry": {"type": "Polygon", "coordinates": [[[-3.0, 42.5], [-1.5, 42.5], [-1.5, 43.5], [-3.0, 43.5], [-3.0, 42.5]]}},
+        {"type": "Feature", "properties": {"name": "País Vasco"}, "geometry": {"type": "Polygon", "coordinates": [[[-3.0, 42.5], [-1.5, 42.5], [-1.5, 43.5], [-3.0, 43.5], [-3.0, 42.5]]]}},
         {"type": "Feature", "properties": {"name": "La Rioja"}, "geometry": {"type": "Point", "coordinates": [-2.4, 42.4]}},
         {"type": "Feature", "properties": {"name": "Ceuta"}, "geometry": {"type": "Point", "coordinates": [-5.3, 35.9]}},
         {"type": "Feature", "properties": {"name": "Melilla"}, "geometry": {"type": "Point", "coordinates": [-2.9, 35.3]}}
