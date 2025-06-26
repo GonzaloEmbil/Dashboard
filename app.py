@@ -1,71 +1,58 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import io
+import plotly.graph_objects as go
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
 
 # Diccionario de columnas disponibles
 columnas_lineas = {
-    'Total': ('RentaAnualNetaMedia', 'yellowgreen', 3),
-    '65 o más': ('RentaAnualNetaMedia65', 'magenta', 3),
-    '45-64': ('RentaAnualNetaMedia45_64', 'red', 3),
-    '30-44': ('RentaAnualNetaMedia30_44', 'blue', 3),
-    '16-29': ('RentaAnualNetaMedia16_29', 'grey', 3)
+    'Total': ('RentaAnualNetaMedia', 'yellowgreen'),
+    '65 o más': ('RentaAnualNetaMedia65', 'magenta'),
+    '45-64': ('RentaAnualNetaMedia45_64', 'red'),
+    '30-44': ('RentaAnualNetaMedia30_44', 'blue'),
+    '16-29': ('RentaAnualNetaMedia16_29', 'grey')
 }
 
-# Sidebar con multiselección
+# Sidebar con selección
 seleccion = st.multiselect(
     "Selecciona los grupos de edad a mostrar:",
     options=list(columnas_lineas.keys()),
     default=list(columnas_lineas.keys())
 )
 
-# Filtrar columnas seleccionadas para el CSV
+# Filtrar columnas seleccionadas
 columnas_csv = ['Periodo'] + [columnas_lineas[grupo][0] for grupo in seleccion]
 df_filtrado = df[columnas_csv]
 
-# Crear gráfico
-fig, ax = plt.subplots(figsize=(15, 10), facecolor='white')
-ax.set_facecolor('#efe9e6')
-ax.grid(alpha=1, linewidth=0.5, color='lightgrey', ls='--', zorder=0)
-
-# Ejes
-ax.set_ylim(8000, 18000)
-ax.set_xlim(left=2010)
-ax.set_xlim(right=2024)
-ax.set_xlabel("Periodo")
-ax.set_ylabel("Renta Anual Neta Media (€)")
-ax.set_title("Evolución de la renta anual neta media por grupo de edad")
-
-# Dibujar líneas seleccionadas
-x = df['Periodo']
+# Crear gráfico interactivo
+fig = go.Figure()
 for grupo in seleccion:
-    col, color, grosor = columnas_lineas[grupo]
-    ax.plot(x, df[col], label=grupo, color=color, linewidth=grosor, zorder=5)
+    col, color = columnas_lineas[grupo]
+    fig.add_trace(go.Scatter(
+        x=df['Periodo'],
+        y=df[col],
+        mode='lines+markers',
+        name=grupo,
+        line=dict(color=color)
+    ))
 
-# Leyenda o mensaje
-if seleccion:
-    ax.legend()
-else:
-    ax.text(0.5, 0.5, "Selecciona al menos una línea para mostrar", 
-            horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-
-# Mostrar gráfico
-st.pyplot(fig)
-
-# Descargar gráfico como PNG
-buf = io.BytesIO()
-fig.savefig(buf, format="png")
-st.download_button(
-    label="📥 Descargar gráfico como PNG",
-    data=buf.getvalue(),
-    file_name="renta_media.png",
-    mime="image/png"
+# Layout personalizado
+fig.update_layout(
+    title="Evolución de la renta anual neta media por grupo de edad",
+    xaxis_title="Periodo",
+    yaxis_title="Renta Anual Neta Media (€)",
+    plot_bgcolor='#efe9e6',
+    paper_bgcolor='white',
+    hovermode='x unified',
+    height=600
 )
+fig.update_yaxes(range=[8000, 18000])
 
-# Descargar datos como CSV
+# Mostrar gráfico en Streamlit
+st.plotly_chart(fig, use_container_width=True)
+
+# Botón para descargar CSV
 csv = df_filtrado.to_csv(index=False, sep=';').encode('utf-8-sig')
 st.download_button(
     label="📄 Descargar datos como CSV",
