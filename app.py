@@ -59,7 +59,7 @@ fig.update_layout(
     xaxis_title="Año",
     yaxis_title="Renta (€)",
     template="simple_white",
-    plot_bgcolor='black',
+    plot_bgcolor='#fafafa',
     paper_bgcolor='black',
     font=dict(family="Segoe UI", size=14, color="black"),
     legend=dict(orientation="h", y=-0.2),
