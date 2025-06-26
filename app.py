@@ -7,11 +7,11 @@ df = pd.read_csv('Rentas.csv', sep=';')
 
 # Diccionario de columnas disponibles
 columnas_lineas = {
-    'Total': ('RentaAnualNetaMedia', 'yellowgreen', 5),
-    '65 o más': ('RentaAnualNetaMedia65', 'magenta', 5),
-    '45-64': ('RentaAnualNetaMedia45_64', 'red', 2.5),
-    '30-44': ('RentaAnualNetaMedia30_44', 'blue', 2.5),
-    '16-29': ('RentaAnualNetaMedia16_29', 'grey', 2.5)
+    'Total': ('RentaAnualNetaMedia', 'yellowgreen', 3),
+    '65 o más': ('RentaAnualNetaMedia65', 'magenta', 3),
+    '45-64': ('RentaAnualNetaMedia45_64', 'red', 3),
+    '30-44': ('RentaAnualNetaMedia30_44', 'blue', 3),
+    '16-29': ('RentaAnualNetaMedia16_29', 'grey', 3)
 }
 
 # Sidebar con multiselección
