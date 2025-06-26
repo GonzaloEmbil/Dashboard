@@ -55,7 +55,7 @@ colores = {
     '65 o más': 'purple',
     '45-64': 'red',
     '30-44': 'blue',
-    '16-29': 'gray'
+    '16-29': 'orange'
 }
 
 seleccion = st.multiselect(
