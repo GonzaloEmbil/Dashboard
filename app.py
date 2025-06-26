@@ -270,14 +270,20 @@ fig_mapa = px.choropleth(
     title=f"Renta Anual Neta Media - {año_seleccionado}",
 )
 
-fig_mapa.update_geos(fitbounds="locations", visible=False)
 fig_mapa.update_layout(
     plot_bgcolor='#0e1117',
     paper_bgcolor='#0e1117',
     font=dict(color="white"),
-    coloraxis_colorbar=dict(title=titulo_color, tickfont=dict(color="white"), titlefont=dict(color="white")),
+    coloraxis=dict(
+        colorbar=dict(
+            title=titulo_color,
+            tickfont=dict(color="white"),
+            titlefont=dict(color="white")
+        )
+    ),
     margin=dict(l=0, r=0, t=50, b=0)
 )
+
 fig_mapa.update_traces(
     hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}"
 )
