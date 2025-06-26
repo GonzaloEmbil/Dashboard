@@ -105,7 +105,7 @@ fig_edad.update_layout(
 st.plotly_chart(fig_edad, use_container_width=True, config={
     "displayModeBar": True,
     "modeBarButtonsToRemove": [
-        "pan", "select", "autoScale", "resetScale"
+        "zoom", "pan", "select", "zoomIn", "zoomOut", "autoScale", "resetScale"
     ],
     "displaylogo": False
 })
