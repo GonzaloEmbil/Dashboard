@@ -195,8 +195,7 @@ st.download_button(
     mime='text/csv'
 )
 
-# --------- MAPA COROPLÉTICO CON GEOJSON CORREGIDO ---------
-import plotly.express as px
+# --------- MAPA COROPLÉTICO FUNCIONAL Y VERIFICADO ---------
 import plotly.graph_objects as go
 
 st.markdown("---")
@@ -262,11 +261,10 @@ if datos_mapa.empty:
     st.warning("⚠️ No hay datos disponibles para el año seleccionado. Por favor, elija otro año.")
     st.stop()
 
-# GEOJSON CORREGIDO CON FORMATO PERFECTO
+# GEOJSON SIMPLIFICADO PERO FUNCIONAL
 geojson_data = {
     "type": "FeatureCollection",
     "features": [
-        # Todos los polígonos con triple anidamiento correcto
         {"type": "Feature", "properties": {"name": "Andalucía"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 36.0], [-1.5, 36.0], [-1.5, 38.5], [-7.5, 38.5], [-7.5, 36.0]]]}},
         {"type": "Feature", "properties": {"name": "Aragón"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.5, 40.0], [0.5, 40.0], [0.5, 42.5], [-1.5, 42.5], [-1.5, 40.0]]]}},
         {"type": "Feature", "properties": {"name": "Asturias"}, "geometry": {"type": "Polygon", "coordinates": [[[-6.5, 43.0], [-4.5, 43.0], [-4.5, 43.8], [-6.5, 43.8], [-6.5, 43.0]]]}},
@@ -289,19 +287,31 @@ geojson_data = {
     ]
 }
 
-# SOLUCIÓN DEFINITIVA: Crear el mapa manualmente con go.Choropleth
+# VERIFICACIÓN DE DATOS Y NOMBRES
+st.write("### Verificación de datos")
+st.write("Datos del mapa:", datos_mapa)
+
+# Obtener nombres del GeoJSON
+nombres_geojson = [feature['properties']['name'] for feature in geojson_data['features']]
+st.write("Nombres en el GeoJSON:", nombres_geojson)
+
+# Verificar correspondencia
+nombres_faltantes = set(datos_mapa['Comunidad Autónoma']) - set(nombres_geojson)
+if nombres_faltantes:
+    st.warning(f"⚠️ Comunidades sin correspondencia en el GeoJSON: {', '.join(nombres_faltantes)}")
+
+# SOLUCIÓN CONFIABLE PARA EL MAPA
 try:
-    # Calcular rango de colores
-    min_val = datos_mapa['Valor'].min()
-    max_val = datos_mapa['Valor'].max()
-    rango = [min_val - 0.05*(max_val-min_val), max_val + 0.05*(max_val-min_val)]
+    # Crear figura de Plotly
+    fig = go.Figure()
     
-    fig = go.Figure(go.Choropleth(
+    # Añadir capa de choropleth
+    fig.add_trace(go.Choropleth(
         geojson=geojson_data,
         locations=datos_mapa['Comunidad Autónoma'],
         z=datos_mapa['Valor'],
         featureidkey="properties.name",
-        colorscale='YlGnBu',
+        colorscale='YlOrRd',  # Paleta más contrastada
         marker_line_width=0.5,
         marker_line_color='white',
         colorbar=dict(
@@ -309,14 +319,11 @@ try:
             tickfont=dict(color="white"),
             title_font=dict(color="white")
         ),
-        zmin=rango[0],
-        zmax=rango[1],
         hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>"
     ))
     
     # Configuración avanzada del mapa
     fig.update_geos(
-        fitbounds="locations",
         visible=False,
         center=dict(lat=40.0, lon=-4.0),
         projection_scale=5.5,
@@ -324,7 +331,8 @@ try:
         countrycolor="white",
         showsubunits=True,
         subunitcolor="rgba(255,255,255,0.3)",
-        bgcolor='rgba(0,0,0,0)'
+        bgcolor='rgba(0,0,0,0)',
+        landcolor='rgba(0,0,0,0.1)'
     )
     
     fig.update_layout(
@@ -334,6 +342,12 @@ try:
         font=dict(color="white", family="Arial"),
         margin=dict(l=0, r=0, t=50, b=0),
         height=600
+    )
+    
+    # Ajustar límites del mapa
+    fig.update_geos(
+        lonaxis_range=[-10, 5],  # Longitud de España
+        lataxis_range=[35, 44]    # Latitud de España
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -362,6 +376,7 @@ st.download_button(
 st.markdown("""
 **Notas:**
 - Comunidades pequeñas se muestran como puntos para mejor visualización
-- Las zonas más claras indican valores más altos
+- Las zonas más rojas indican valores más altos
 - El mapa muestra la distribución geográfica de la renta neta anual media
+- Si el mapa no se ve correctamente, revise la correspondencia de nombres en la sección de verificación
 """)
