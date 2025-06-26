@@ -28,6 +28,8 @@ ax.grid(alpha=1, linewidth=0.5, color='lightgrey', ls='--', zorder=0)
 
 # Ejes
 ax.set_ylim(8000, 18000)
+ax.set_xlim(left=2010)
+ax.set_xlim(right=2024)
 ax.set_xlabel("Periodo")
 ax.set_ylabel("Renta Anual Neta Media (€)")
 ax.set_title("Evolución de la renta anual neta media por grupo de edad")
