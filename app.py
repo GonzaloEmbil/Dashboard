@@ -119,82 +119,6 @@ st.download_button(
     mime='text/csv'
 )
 
-# --------- GRÁFICO POR SEXO ---------
-st.markdown("---")
-st.subheader("👥 Renta Anual Neta Media por Sexo")
-
-vista_sexo = st.selectbox(
-    "Selecciona el tipo de visualización:",
-    options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
-    index=0,
-    key="vista_sexo"
-)
-
-if vista_sexo == "Valores absolutos (€)":
-    hombres_col = 'RentaAnualNetaMediaHombres'
-    mujeres_col = 'RentaAnualNetaMediaMujeres'
-    yaxis_title_sexo = "Renta (€)"
-    y_range_sexo = [8000, 18000]
-    hover_h = "Hombres: %{y:,.0f} €"
-    hover_m = "Mujeres: %{y:,.0f} €"
-else:
-    hombres_col = 'RentaAnualNetaMediaHombresBase2010'
-    mujeres_col = 'RentaAnualNetaMediaMujeresBase2010'
-    yaxis_title_sexo = "Variación desde 2010 (%)"
-    y_range_sexo = [80, 120]
-    hover_h = "Hombres: %{y:.1f} %"
-    hover_m = "Mujeres: %{y:.1f} %"
-
-fig_sexo = go.Figure()
-
-fig_sexo.add_trace(go.Scatter(
-    x=df['Periodo'],
-    y=df[hombres_col],
-    mode='lines+markers',
-    name="Hombres",
-    line=dict(color='royalblue', width=2),
-    hovertemplate=f"Año: %{{x}}<br>{hover_h}<extra></extra>"
-))
-fig_sexo.add_trace(go.Scatter(
-    x=df['Periodo'],
-    y=df[mujeres_col],
-    mode='lines+markers',
-    name="Mujeres",
-    line=dict(color='tomato', width=2),
-    hovertemplate=f"Año: %{{x}}<br>{hover_m}<extra></extra>"
-))
-
-fig_sexo.update_layout(
-    xaxis=dict(title="Año", title_font=dict(color="white"), tickfont=dict(color="white"),
-               showgrid=True, gridcolor="gray"),
-    yaxis=dict(title=yaxis_title_sexo, title_font=dict(color="white"), tickfont=dict(color="white"),
-               showgrid=True, gridcolor="gray", range=y_range_sexo if vista_sexo != "Valores absolutos (€)" else None),
-    template="none",
-    plot_bgcolor='#0e1117',
-    paper_bgcolor='#0e1117',
-    font=dict(color="white"),
-    legend=dict(orientation="h", y=-0.2, font=dict(color="white")),
-    hovermode='x unified',
-    height=500
-)
-
-st.plotly_chart(fig_sexo, use_container_width=True, config={
-    "displayModeBar": True,
-    "modeBarButtonsToRemove": [
-        "zoom", "pan", "select", "zoomIn", "zoomOut", "autoScale", "resetScale"
-    ],
-    "displaylogo": False
-})
-
-df_descarga_sexo = df[['Periodo', hombres_col, mujeres_col]]
-csv_sexo = df_descarga_sexo.to_csv(index=False).encode('utf-8')
-st.download_button(
-    label="⬇️ Descargar CSV con los datos seleccionados",
-    data=csv_sexo,
-    file_name="renta_por_sexo.csv",
-    mime='text/csv'
-)
-
 # --------- GRÁFICO POR COMUNIDADES ---------
 import pandas as pd
 import plotly.graph_objects as go
@@ -202,7 +126,6 @@ import plotly.graph_objects as go
 st.markdown("---")
 st.subheader("🍭 Evolución de Renta desde 2010 por Comunidad Autónoma")
 
-# --- Diccionario de columnas ---
 columnas = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
@@ -223,7 +146,6 @@ columnas = {
     "Canarias": "RentaAnualNetaMediaCanarias"
 }
 
-# --- Año base y año a comparar ---
 anio_base = 2010
 anio_destino = st.selectbox(
     "Selecciona el año a comparar con 2010:",
@@ -232,7 +154,6 @@ anio_destino = st.selectbox(
     key="anio_lollipop"
 )
 
-# --- Recoger y organizar los datos ---
 datos = []
 for comunidad, col in columnas.items():
     if col in df.columns:
@@ -251,16 +172,16 @@ for comunidad, col in columnas.items():
 
 df_lollipop = pd.DataFrame(datos).sort_values(f"Valor {anio_destino}", ascending=True)
 
-# --- Crear figura con líneas, puntos y texto centrado ---
 fig = go.Figure()
 
 for _, row in df_lollipop.iterrows():
     base = row["Valor 2010"]
     actual = row[f"Valor {anio_destino}"]
     variacion = row["Variación (%)"]
-    color = "#2ecc71" if variacion >= 0 else "#e74c3c"  # verde / rojo
+    color = "#2ecc71" if variacion >= 0 else "#e74c3c"
+    x_center = (base + actual) / 2
+    variacion_texto = f"{'+' if variacion > 0 else '-'}{abs(variacion):.1f} %"
 
-    # Añadir línea horizontal entre los dos puntos
     fig.add_trace(go.Scatter(
         x=[base, actual],
         y=[row["CCAA"], row["CCAA"]],
@@ -270,9 +191,6 @@ for _, row in df_lollipop.iterrows():
         showlegend=False
     ))
 
-    # Añadir texto centrado sobre la línea
-    x_center = (base + actual) / 2
-    variacion_texto = f"{'+' if variacion > 0 else '-'}{abs(variacion):.1f} %"
     fig.add_trace(go.Scatter(
         x=[x_center],
         y=[row["CCAA"]],
@@ -284,7 +202,6 @@ for _, row in df_lollipop.iterrows():
         showlegend=False
     ))
 
-# --- Añadir puntos de cada extremo ---
 fig.add_trace(go.Scatter(
     x=df_lollipop["Valor 2010"],
     y=df_lollipop["CCAA"],
@@ -293,7 +210,6 @@ fig.add_trace(go.Scatter(
     name="2010",
     hovertemplate="<b>%{y}</b><br>2010: %{x:,.0f} €<extra></extra>"
 ))
-
 fig.add_trace(go.Scatter(
     x=df_lollipop[f"Valor {anio_destino}"],
     y=df_lollipop["CCAA"],
@@ -303,7 +219,6 @@ fig.add_trace(go.Scatter(
     hovertemplate=f"<b>%{{y}}</b><br>{anio_destino}: %{{x:,.0f}} €<extra></extra>"
 ))
 
-# --- Estética ---
 fig.update_layout(
     title=f"🍭 Comparación de Renta por Comunidad Autónoma: 2010 vs {anio_destino}",
     xaxis_title="Renta (€)",
@@ -317,3 +232,81 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
+# 👉 Botón de descarga CSV por comunidades
+csv_comunidades = df_lollipop.to_csv(index=False).encode('utf-8')
+st.download_button(
+    label="⬇️ Descargar CSV de comparación por CCAA",
+    data=csv_comunidades,
+    file_name=f"comparacion_renta_CCAA_2010_vs_{anio_destino}.csv",
+    mime='text/csv'
+)
+
+# --------- GRÁFICO POR SEXO ---------
+st.markdown("---")
+st.subheader("👥 Renta Anual Neta Media por Sexo")
+
+vista_sexo = st.selectbox(
+    "Selecciona el tipo de visualización:",
+    options=["Valores absolutos (€)", "Variación respecto a 2010 (%)", "Diferencia Hombres - Mujeres"],
+    index=0,
+    key="vista_sexo"
+)
+
+fig_sexo = go.Figure()
+
+if vista_sexo == "Valores absolutos (€)":
+    hombres_col = 'RentaAnualNetaMediaHombres'
+    mujeres_col = 'RentaAnualNetaMediaMujeres'
+    yaxis_title = "Renta (€)"
+    y_range = [8000, 18000]
+    fig_sexo.add_trace(go.Scatter(
+        x=df['Periodo'],
+        y=df[hombres_col],
+        mode='lines+markers',
+        name="Hombres",
+        line=dict(color='royalblue'),
+        hovertemplate="Año: %{x}<br>Hombres: %{y:,.0f} €<extra></extra>"
+    ))
+    fig_sexo.add_trace(go.Scatter(
+        x=df['Periodo'],
+        y=df[mujeres_col],
+        mode='lines+markers',
+        name="Mujeres",
+        line=dict(color='tomato'),
+        hovertemplate="Año: %{x}<br>Mujeres: %{y:,.0f} €<extra></extra>"
+    ))
+
+elif vista_sexo == "Variación respecto a 2010 (%)":
+    hombres_col = 'RentaAnualNetaMediaHombresBase2010'
+    mujeres_col = 'RentaAnualNetaMediaMujeresBase2010'
+    yaxis_title = "Variación desde 2010 (%)"
+    y_range = [80, 120]
+    fig_sexo.add_trace(go.Scatter(
+        x=df['Periodo'],
+        y=df[hombres_col],
+        mode='lines+markers',
+        name="Hombres",
+        line=dict(color='royalblue'),
+        hovertemplate="Año: %{x}<br>Hombres: %{y:.1f} %<extra></extra>"
+    ))
+    fig_sexo.add_trace(go.Scatter(
+        x=df['Periodo'],
+        y=df[mujeres_col],
+        mode='lines+markers',
+        name="Mujeres",
+        line=dict(color='tomato'),
+        hovertemplate="Año: %{x}<br>Mujeres: %{y:.1f} %<extra></extra>"
+    ))
+
+else:  # Diferencia entre hombres y mujeres
+    abs_col = 'RentaAnualNetaMediaHombres'
+    abs_muj = 'RentaAnualNetaMediaMujeres'
+    if 'Base2010' in df.columns[1]:
+        abs_col += 'Base2010'
+        abs_muj += 'Base2010'
+        yaxis_title = "Diferencia Hombres - Mujeres (%)"
+    else:
+        yaxis_title = "Diferencia Hombres - Mujeres (€)"
+    diferencia = df[abs_col] - df[abs_muj]
+    fig_sexo.add
