@@ -269,7 +269,7 @@ fig_barras = px.bar(
     y="CCAA",
     orientation='h',
     color=etiqueta_valor,
-    color_continuous_scale="Viridis",
+    color_continuous_scale="Cividis",
     title=titulo,
     labels={etiqueta_valor: etiqueta_valor, "CCAA": "Comunidad"}
 )
