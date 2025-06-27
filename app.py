@@ -211,15 +211,15 @@ columnas_ccaa = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
     "Principado de Asturias": "RentaAnualNetaMediaAsturias",
-    "Illes Baleares": "RentaAnualNetaMediaBaleares",
+    "Illes Balears": "RentaAnualNetaMediaBaleares",
     "Cantabria": "RentaAnualNetaMediaCantabria",
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
     "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamancha",
     "Cataluña": "RentaAnualNetaMediaCataluna",
-    "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
+    "Comunitat Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
-    "País Vasco": "RentaAnualNetaMediaPaisVasco"
+    "País Vasco": "RentaAnualNetaMediaPaisVasco",
 }
 
 # --- Selector de año ---
