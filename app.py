@@ -196,13 +196,13 @@ st.download_button(
 )
 
 # --------- GRÁFICO POR COMUNIDADES ---------
-import plotly.graph_objects as go
 import pandas as pd
+import plotly.graph_objects as go
 
 st.markdown("---")
 st.subheader("🍭 Evolución de Renta desde 2010 por Comunidad Autónoma")
 
-# --- Diccionario de columnas base (euros) ---
+# --- Diccionario de columnas ---
 columnas = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
@@ -223,7 +223,7 @@ columnas = {
     "Canarias": "RentaAnualNetaMediaCanarias"
 }
 
-# --- Año base y selector de año destino ---
+# --- Año base y año a comparar ---
 anio_base = 2010
 anio_destino = st.selectbox(
     "Selecciona el año a comparar con 2010:",
@@ -232,7 +232,7 @@ anio_destino = st.selectbox(
     key="anio_lollipop"
 )
 
-# --- Construir DataFrame con valores ---
+# --- Recoger y organizar los datos ---
 datos = []
 for comunidad, col in columnas.items():
     if col in df.columns:
@@ -244,54 +244,69 @@ for comunidad, col in columnas.items():
             variacion = ((valor_actual - valor_base) / valor_base) * 100
             datos.append({
                 "CCAA": comunidad,
-                "Base": valor_base,
-                "Actual": valor_actual,
+                "Valor 2010": valor_base,
+                f"Valor {anio_destino}": valor_actual,
                 "Variación (%)": variacion
             })
 
-df_lollipop = pd.DataFrame(datos).sort_values("Actual", ascending=True)
+df_lollipop = pd.DataFrame(datos).sort_values(f"Valor {anio_destino}", ascending=True)
 
-# --- Crear figura ---
+# --- Crear figura con líneas, puntos y texto centrado ---
 fig = go.Figure()
 
 for _, row in df_lollipop.iterrows():
-    color_linea = "#2ecc71" if row["Variación (%)"] >= 0 else "#e74c3c"  # Verde o rojo
+    base = row["Valor 2010"]
+    actual = row[f"Valor {anio_destino}"]
+    variacion = row["Variación (%)"]
+    color = "#2ecc71" if variacion >= 0 else "#e74c3c"  # verde / rojo
+
+    # Añadir línea horizontal entre los dos puntos
     fig.add_trace(go.Scatter(
-        x=[row["Base"], row["Actual"]],
+        x=[base, actual],
         y=[row["CCAA"], row["CCAA"]],
-        mode="lines+text",
-        line=dict(color=color_linea, width=3),
-        text=[None, f"{row['Variación (%)']:.1f} %"],
-        textposition="top center",
-        textfont=dict(color=color_linea),
+        mode="lines",
+        line=dict(color=color, width=3),
         hoverinfo="skip",
         showlegend=False
     ))
 
-# --- Añadir puntos de inicio y fin ---
+    # Añadir texto centrado sobre la línea
+    x_center = (base + actual) / 2
+    variacion_texto = f"{'+' if variacion > 0 else '-'}{abs(variacion):.1f} %"
+    fig.add_trace(go.Scatter(
+        x=[x_center],
+        y=[row["CCAA"]],
+        mode="text",
+        text=[variacion_texto],
+        textposition="top center",
+        textfont=dict(color=color, size=12),
+        hoverinfo="skip",
+        showlegend=False
+    ))
+
+# --- Añadir puntos de cada extremo ---
 fig.add_trace(go.Scatter(
-    x=df_lollipop["Base"],
+    x=df_lollipop["Valor 2010"],
     y=df_lollipop["CCAA"],
     mode="markers",
     marker=dict(size=10, color="lightgray"),
-    name=f"{anio_base}",
-    hovertemplate=f"<b>%{{y}}</b><br>{anio_base}: %{{x:,.0f}} €<extra></extra>"
+    name="2010",
+    hovertemplate="<b>%{y}</b><br>2010: %{x:,.0f} €<extra></extra>"
 ))
 
 fig.add_trace(go.Scatter(
-    x=df_lollipop["Actual"],
+    x=df_lollipop[f"Valor {anio_destino}"],
     y=df_lollipop["CCAA"],
     mode="markers",
     marker=dict(size=12, color="#00b4d8"),
-    name=f"{anio_destino}",
+    name=str(anio_destino),
     hovertemplate=f"<b>%{{y}}</b><br>{anio_destino}: %{{x:,.0f}} €<extra></extra>"
 ))
 
-# --- Ajustes visuales ---
+# --- Estética ---
 fig.update_layout(
-    title=f"📍 Renta por Comunidad Autónoma: Comparación {anio_base} vs {anio_destino}",
+    title=f"🍭 Comparación de Renta por Comunidad Autónoma: 2010 vs {anio_destino}",
     xaxis_title="Renta (€)",
-    yaxis_title="",
     yaxis=dict(categoryorder="array", categoryarray=df_lollipop["CCAA"].tolist()),
     paper_bgcolor="#0e1117",
     plot_bgcolor="#0e1117",
