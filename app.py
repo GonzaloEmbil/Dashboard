@@ -195,7 +195,7 @@ st.download_button(
     mime='text/csv'
 )
 
-# --------- MAPA COROPLÉTICO FUNCIONAL (sin Ceuta, Melilla, Canarias, Madrid, La Rioja, Navarra, Murcia) ---------
+# --------- MAPA COROPLÉTICO FUNCIONAL ---------
 import json
 import plotly.express as px
 
@@ -205,12 +205,10 @@ st.subheader("🗺️ Mapa Interactivo de Renta por Comunidad Autónoma")
 # --- Cargar GeoJSON con los límites de las CCAA ---
 with open("ccaa_es.geojson", encoding="utf-8") as f:
     geojson = json.load(f)
-    st.write("🔎 Estructura de 'properties' en el GeoJSON:")
+st.write("🔎 Estructura de 'properties' en el GeoJSON:")
 for feature in geojson['features']:
     st.write(feature['properties'].keys())
-    break  # con uno solo nos basta para ver la estructura
-
-
+    break
 
 # --- Diccionario para mapear columnas a nombres de CCAA ---
 columnas_ccaa = {
@@ -250,25 +248,31 @@ df_mapa = pd.DataFrame({
 st.write("📊 Renta por CCAA:")
 st.write(df_mapa)
 
-
 # --- Crear el mapa con Plotly Express ---
 fig_mapa = px.choropleth(
     df_mapa,
     geojson=geojson,
     locations="CCAA",
-    featureidkey="properties.acom_name",  # <-- esta es la clave correcta
+    featureidkey="properties.acom_name",
     color="Renta",
-    color_continuous_scale="Viridis",
+    hover_name="CCAA",
+    color_continuous_scale="Inferno",
     labels={"Renta": "Renta (€)"},
     title=f"Renta Anual Neta Media por CCAA ({anio_mapa})"
 )
 
 # --- Personalización visual ---
-fig_mapa.update_geos(fitbounds="locations", visible=False)
+fig_mapa.update_geos(
+    fitbounds="locations",
+    visible=False,
+    projection_type="mercator"
+)
 fig_mapa.update_layout(
-    margin={"r":0, "t":50, "l":0, "b":0},
-    paper_bgcolor='#0e1117',
-    plot_bgcolor='#0e1117',
+    coloraxis_colorbar=dict(title="Renta (€)"),
+    coloraxis=dict(cmin=8000, cmax=15000),
+    margin={"r": 0, "t": 50, "l": 0, "b": 0},
+    paper_bgcolor="#0e1117",
+    plot_bgcolor="#0e1117",
     font=dict(color="white")
 )
 
