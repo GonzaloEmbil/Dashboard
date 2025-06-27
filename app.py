@@ -124,7 +124,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 st.markdown("---")
-st.subheader("🍭 Evolución de Renta desde 2010 por Comunidad Autónoma")
+st.subheader("🍭 Renta anual neta media por Comunidad Autónoma")
 
 columnas = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
@@ -242,7 +242,6 @@ st.download_button(
     mime='text/csv'
 )
 
-# --------- GRÁFICO POR SEXO ---------
 # --------- GRÁFICO POR SEXO ---------
 st.markdown("---")
 st.subheader("👥 Renta Anual Neta Media por Sexo")
