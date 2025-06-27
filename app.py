@@ -197,12 +197,13 @@ st.download_button(
 
 # --------- GRÁFICO POR COMUNIDADES ---------
 import plotly.graph_objects as go
+import pandas as pd
 
 st.markdown("---")
-st.subheader("🍭 Evolución de Renta desde 2010 por CCAA")
+st.subheader("🍭 Evolución de Renta desde 2010 por Comunidad Autónoma")
 
-# --- Diccionarios de columnas ---
-columnas_2010 = {
+# --- Diccionario de columnas base (euros) ---
+columnas = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
     "Principado de Asturias": "RentaAnualNetaMediaAsturias",
@@ -222,75 +223,82 @@ columnas_2010 = {
     "Canarias": "RentaAnualNetaMediaCanarias"
 }
 
-# --- Selector de año ---
-anio_lollipop = st.selectbox(
+# --- Año base y selector de año destino ---
+anio_base = 2010
+anio_destino = st.selectbox(
     "Selecciona el año a comparar con 2010:",
-    options=sorted(df['Periodo'].unique()),
-    index=len(df['Periodo'].unique()) - 1,
+    sorted(df["Periodo"].unique()),
+    index=len(df["Periodo"].unique()) - 1,
     key="anio_lollipop"
 )
 
-# --- Preparar datos ---
-data = []
-for comunidad, col in columnas_2010.items():
+# --- Construir DataFrame con valores ---
+datos = []
+for comunidad, col in columnas.items():
     if col in df.columns:
-        valor_2010 = df.loc[df['Periodo'] == 2010, col].values[0] if not df.loc[df['Periodo'] == 2010, col].empty else None
-        valor_actual = df.loc[df['Periodo'] == anio_lollipop, col].values[0] if not df.loc[df['Periodo'] == anio_lollipop, col].empty else None
-
-        if valor_2010 and valor_actual:
-            variacion = ((valor_actual - valor_2010) / valor_2010) * 100
-            data.append({
+        fila_base = df.loc[df["Periodo"] == anio_base, col]
+        fila_dest = df.loc[df["Periodo"] == anio_destino, col]
+        if not fila_base.empty and not fila_dest.empty:
+            valor_base = fila_base.values[0]
+            valor_actual = fila_dest.values[0]
+            variacion = ((valor_actual - valor_base) / valor_base) * 100
+            datos.append({
                 "CCAA": comunidad,
-                "Valor 2010 (€)": valor_2010,
-                f"Valor {anio_lollipop} (€)": valor_actual,
+                "Base": valor_base,
+                "Actual": valor_actual,
                 "Variación (%)": variacion
             })
 
-# --- Crear DataFrame ordenado ---
-import pandas as pd
-df_lollipop = pd.DataFrame(data).sort_values(by="Variación (%)", ascending=False)
+df_lollipop = pd.DataFrame(datos).sort_values("Actual", ascending=True)
 
-# --- Crear gráfico ---
+# --- Crear figura ---
 fig = go.Figure()
 
-# Línea del palito
-fig.add_trace(go.Scatter(
-    x=df_lollipop["Variación (%)"],
-    y=df_lollipop["CCAA"],
-    mode="lines",
-    line=dict(color="lightgray", width=2),
-    hoverinfo="none",
-    showlegend=False
-))
+for _, row in df_lollipop.iterrows():
+    color_linea = "#2ecc71" if row["Variación (%)"] >= 0 else "#e74c3c"  # Verde o rojo
+    fig.add_trace(go.Scatter(
+        x=[row["Base"], row["Actual"]],
+        y=[row["CCAA"], row["CCAA"]],
+        mode="lines+text",
+        line=dict(color=color_linea, width=3),
+        text=[None, f"{row['Variación (%)']:.1f} %"],
+        textposition="top center",
+        textfont=dict(color=color_linea),
+        hoverinfo="skip",
+        showlegend=False
+    ))
 
-# Punto final (piruleta) con color según signo
-colores = ["#f3722c" if val >= 0 else "#577590" for val in df_lollipop["Variación (%)"]]
-
+# --- Añadir puntos de inicio y fin ---
 fig.add_trace(go.Scatter(
-    x=df_lollipop["Variación (%)"],
+    x=df_lollipop["Base"],
     y=df_lollipop["CCAA"],
     mode="markers",
-    marker=dict(size=14, color=colores),
-    text=[
-        f"<b>{row['CCAA']}</b><br>"
-        f"🔹 2010: {row['Valor 2010 (€)']:.0f} €<br>"
-        f"🔸 {anio_lollipop}: {row[f'Valor {anio_lollipop} (€)']:.0f} €<br>"
-        f"📈 Variación: {row['Variación (%)']:.2f} %"
-        for _, row in df_lollipop.iterrows()
-    ],
-    hovertemplate="%{text}<extra></extra>",
-    showlegend=False
+    marker=dict(size=10, color="lightgray"),
+    name=f"{anio_base}",
+    hovertemplate=f"<b>%{{y}}</b><br>{anio_base}: %{{x:,.0f}} €<extra></extra>"
 ))
 
-# --- Estética final ---
+fig.add_trace(go.Scatter(
+    x=df_lollipop["Actual"],
+    y=df_lollipop["CCAA"],
+    mode="markers",
+    marker=dict(size=12, color="#00b4d8"),
+    name=f"{anio_destino}",
+    hovertemplate=f"<b>%{{y}}</b><br>{anio_destino}: %{{x:,.0f}} €<extra></extra>"
+))
+
+# --- Ajustes visuales ---
 fig.update_layout(
-    title=f"🍭 Variación de Renta desde 2010 por Comunidad Autónoma ({anio_lollipop})",
-    xaxis_title="Variación porcentual respecto a 2010",
+    title=f"📍 Renta por Comunidad Autónoma: Comparación {anio_base} vs {anio_destino}",
+    xaxis_title="Renta (€)",
     yaxis_title="",
+    yaxis=dict(categoryorder="array", categoryarray=df_lollipop["CCAA"].tolist()),
     paper_bgcolor="#0e1117",
     plot_bgcolor="#0e1117",
     font=dict(color="white"),
-    margin=dict(l=80, r=20, t=60, b=30)
+    margin=dict(l=80, r=30, t=60, b=30),
+    height=700,
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
 )
 
 st.plotly_chart(fig, use_container_width=True)
