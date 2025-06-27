@@ -195,21 +195,14 @@ st.download_button(
     mime='text/csv'
 )
 
-# --- MAPA ---
-
-import requests
+# --------- GRÁFICO POR COMUNIDADES ---------
 import plotly.express as px
 
 st.markdown("---")
-st.subheader("🗺️ Mapa Interactivo de Renta por Comunidad Autónoma")
+st.subheader("📊 Comparativa de Renta por Comunidad Autónoma")
 
-# --- Cargar GeoJSON desde fuente fiable (Opendatasoft) ---
-geojson_url = "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/georef-spain-comunidad-autonoma/exports/geojson?lang=es&timezone=Europe%2FMadrid"
-response = requests.get(geojson_url)
-geojson = response.json()
-
-# --- Diccionario con nombres EXACTOS del GeoJSON ---
-columnas_ccaa = {
+# --- Diccionario de columnas por comunidad (valores absolutos) ---
+columnas_euros = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
     "Principado de Asturias": "RentaAnualNetaMediaAsturias",
@@ -221,7 +214,7 @@ columnas_ccaa = {
     "Comunitat Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
-    "Euskadi": "RentaAnualNetaMediaPaisVasco",
+    "País Vasco": "RentaAnualNetaMediaPaisVasco",
     "Comunidad de Madrid": "RentaAnualNetaMediaMadrid",
     "Región de Murcia": "RentaAnualNetaMediaMurcia",
     "Comunidad Foral de Navarra": "RentaAnualNetaMediaNavarra",
@@ -229,62 +222,64 @@ columnas_ccaa = {
     "Canarias": "RentaAnualNetaMediaCanarias"
 }
 
+# --- Diccionario equivalente para variación respecto a 2010 ---
+columnas_var = {
+    comunidad: col + "Base2010" for comunidad, col in columnas_euros.items()
+}
+
+# --- Selector de tipo de visualización ---
+vista = st.selectbox(
+    "Selecciona el tipo de visualización:",
+    options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
+    index=0
+)
+
 # --- Selector de año ---
-anio_mapa = st.selectbox(
-    "Selecciona el año a visualizar en el mapa:",
+anio_barras = st.selectbox(
+    "Selecciona el año a visualizar:",
     options=sorted(df['Periodo'].unique()),
     index=len(df['Periodo'].unique()) - 1,
-    key="anio_mapa"
+    key="anio_barras"
 )
 
-# --- Construir DataFrame del mapa ---
-df_mapa = pd.DataFrame({
-    "CCAA": list(columnas_ccaa.keys()),
-    "Renta": [df.loc[df['Periodo'] == anio_mapa, col].values[0] if not df.loc[df['Periodo'] == anio_mapa, col].empty else None for col in columnas_ccaa.values()]
+# --- Elegir diccionario según vista ---
+if vista == "Valores absolutos (€)":
+    columnas = columnas_euros
+    etiqueta_valor = "Renta (€)"
+    titulo = f"Renta Anual Neta Media por CCAA ({anio_barras})"
+    hover_fmt = "%{x:,.0f} €"
+else:
+    columnas = columnas_var
+    etiqueta_valor = "Variación (%)"
+    titulo = f"Variación desde 2010 por CCAA ({anio_barras})"
+    hover_fmt = "%{x:.1f} %"
+
+# --- Crear DataFrame para el gráfico ---
+df_barras = pd.DataFrame({
+    "CCAA": list(columnas.keys()),
+    etiqueta_valor: [df.loc[df['Periodo'] == anio_barras, col].values[0] for col in columnas.values()]
 })
 
-# Convertir a numérico y manejar nulos
-df_mapa["Renta"] = pd.to_numeric(df_mapa["Renta"], errors="coerce")
-
-# Mostrar rango real de datos para ajustar cmin/cmax si hace falta
-renta_min = df_mapa["Renta"].min()
-renta_max = df_mapa["Renta"].max()
-st.write("📊 Rango de rentas por CCAA:", f"{renta_min:,.0f} € — {renta_max:,.0f} €")
-st.write(df_mapa)
-
-# --- Crear mapa con Plotly Express ---
-fig_mapa = px.choropleth(
-    df_mapa,
-    geojson=geojson,
-    locations="CCAA",
-    featureidkey="properties.acom_name",
-    color="Renta",
-    hover_name="CCAA",
+# --- Gráfico de barras horizontal ---
+fig_barras = px.bar(
+    df_barras,
+    x=etiqueta_valor,
+    y="CCAA",
+    orientation='h',
+    color=etiqueta_valor,
     color_continuous_scale="Inferno",
-    labels={"Renta": "Renta (€)"},
-    title=f"Renta Anual Neta Media por CCAA ({anio_mapa})"
+    title=titulo,
+    labels={etiqueta_valor: etiqueta_valor, "CCAA": "Comunidad"}
 )
 
-# --- Configurar el mapa visualmente ---
-fig_mapa.update_geos(
-    visible=False,
-    projection_type="mercator",
-    center={"lat": 40, "lon": -3.5},
-    projection_scale=5
-)
-
-# Ajustar escala solo si el rango tiene sentido
-if renta_min is not None and renta_max is not None and renta_max > renta_min:
-    fig_mapa.update_layout(
-        coloraxis=dict(cmin=renta_min, cmax=renta_max)
-    )
-
-fig_mapa.update_layout(
-    coloraxis_colorbar=dict(title="Renta (€)"),
-    margin={"r": 0, "t": 50, "l": 0, "b": 0},
+fig_barras.update_traces(hovertemplate=f"<b>%{{y}}</b><br>{hover_fmt}<extra></extra>")
+fig_barras.update_layout(
+    xaxis_title=etiqueta_valor,
+    yaxis_title="",
     paper_bgcolor="#0e1117",
     plot_bgcolor="#0e1117",
-    font=dict(color="white")
+    font=dict(color="white"),
+    coloraxis_colorbar=dict(title=etiqueta_valor)
 )
 
-st.plotly_chart(fig_mapa, use_container_width=True)
+st.plotly_chart(fig_barras, use_container_width=True)
