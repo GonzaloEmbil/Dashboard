@@ -223,18 +223,16 @@ columnas_euros = {
 }
 
 # --- Diccionario equivalente para variación respecto a 2010 ---
-columnas_var = {
-    comunidad: col + "Base2010" for comunidad, col in columnas_euros.items()
-}
+columnas_var = {com: col + "Base2010" for com, col in columnas_euros.items()}
 
-# --- Selector de tipo de visualización ---
+# --- Selector del tipo de vista ---
 vista = st.selectbox(
     "Selecciona el tipo de visualización:",
     options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
     index=0
 )
 
-# --- Selector de año ---
+# --- Selector del año ---
 anio_barras = st.selectbox(
     "Selecciona el año a visualizar:",
     options=sorted(df['Periodo'].unique()),
@@ -242,7 +240,7 @@ anio_barras = st.selectbox(
     key="anio_barras"
 )
 
-# --- Elegir diccionario según vista ---
+# --- Elegir columnas según vista seleccionada ---
 if vista == "Valores absolutos (€)":
     columnas = columnas_euros
     etiqueta_valor = "Renta (€)"
@@ -254,13 +252,17 @@ else:
     titulo = f"Variación desde 2010 por CCAA ({anio_barras})"
     hover_fmt = "%{x:.1f} %"
 
-# --- Crear DataFrame para el gráfico ---
+# --- Crear y ordenar DataFrame ---
 df_barras = pd.DataFrame({
     "CCAA": list(columnas.keys()),
-    etiqueta_valor: [df.loc[df['Periodo'] == anio_barras, col].values[0] for col in columnas.values()]
+    etiqueta_valor: [
+        df.loc[df['Periodo'] == anio_barras, col].values[0]
+        for col in columnas.values()
+    ]
 })
+df_barras.sort_values(by=etiqueta_valor, ascending=False, inplace=True)
 
-# --- Gráfico de barras horizontal ---
+# --- Crear gráfico de barras ordenado ---
 fig_barras = px.bar(
     df_barras,
     x=etiqueta_valor,
