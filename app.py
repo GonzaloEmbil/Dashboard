@@ -247,6 +247,10 @@ df_mapa = pd.DataFrame({
     "Renta": [df.loc[df['Periodo'] == anio_mapa, col].values[0] for col in columnas_ccaa.values()]
 })
 
+st.write("📊 Renta por CCAA:")
+st.write(df_mapa)
+
+
 # --- Crear el mapa con Plotly Express ---
 fig_mapa = px.choropleth(
     df_mapa,
