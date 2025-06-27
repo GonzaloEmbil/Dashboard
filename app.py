@@ -196,13 +196,13 @@ st.download_button(
 )
 
 # --------- GRÁFICO POR COMUNIDADES ---------
-import plotly.express as px
+import plotly.graph_objects as go
 
 st.markdown("---")
-st.subheader("📊 Comparativa de Renta por Comunidad Autónoma")
+st.subheader("🍭 Evolución de Renta desde 2010 por CCAA")
 
-# --- Diccionario de columnas por comunidad (valores en euros) ---
-columnas_euros = {
+# --- Diccionarios de columnas ---
+columnas_2010 = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
     "Principado de Asturias": "RentaAnualNetaMediaAsturias",
@@ -222,91 +222,75 @@ columnas_euros = {
     "Canarias": "RentaAnualNetaMediaCanarias"
 }
 
-# --- Diccionario de columnas por comunidad (variación % respecto a 2010) ---
-columnas_var = {
-    "Andalucía": "RentaAnualNetaMediaAndaluciaBase2010",
-    "Aragón": "RentaAnualNetaMediaAragonBase2010",
-    "Principado de Asturias": "RentaAnualNetaMediaAsturiasBase2010",
-    "Illes Balears": "RentaAnualNetaMediaBalearesBase2010",
-    "Cantabria": "RentaAnualNetaMediaCantabriaBase2010",
-    "Castilla y León": "RentaAnualNetaMediaCastillayleonBase2010",
-    "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamanchaBase2010",
-    "Cataluña": "RentaAnualNetaMediaCatalunaBase2010",
-    "Comunitat Valenciana": "RentaAnualNetaMediaComunidadvalencianaBase2010",
-    "Extremadura": "RentaAnualNetaMediaExtremaduraBase2010",
-    "Galicia": "RentaAnualNetaMediaGaliciaBase2010",
-    "País Vasco": "RentaAnualNetaMediaPaisVascoBase2010",
-    "Comunidad de Madrid": "RentaAnualNetaMediaMadridBase2010",
-    "Región de Murcia": "RentaAnualNetaMediaMurciaBase2010",
-    "Comunidad Foral de Navarra": "RentaAnualNetaMediaNavarraBase2010",
-    "La Rioja": "RentaAnualNetaMediaRiojaBase2010",
-    "Canarias": "RentaAnualNetaMediaCanariasBase2010"
-}
-
-# --- Selector de visualización ---
-vista = st.selectbox(
-    "Selecciona el tipo de visualización:",
-    ["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
-    index=0
-)
-
 # --- Selector de año ---
-anio_barras = st.selectbox(
-    "Selecciona el año a visualizar:",
-    sorted(df['Periodo'].unique()),
+anio_lollipop = st.selectbox(
+    "Selecciona el año a comparar con 2010:",
+    options=sorted(df['Periodo'].unique()),
     index=len(df['Periodo'].unique()) - 1,
-    key="anio_barras"
+    key="anio_lollipop"
 )
 
-# --- Configurar según la vista ---
-if vista == "Valores absolutos (€)":
-    columnas = columnas_euros
-    etiqueta_valor = "Renta (€)"
-    titulo = f"Renta Anual Neta Media por CCAA ({anio_barras})"
-    hover_fmt = "%{x:,.0f} €"
-else:
-    columnas = columnas_var
-    etiqueta_valor = "Variación (%)"
-    titulo = f"Variación desde 2010 por CCAA ({anio_barras})"
-    hover_fmt = "%{x:.1f} %"
-
-# --- Recoger datos con verificación de columnas seguras ---
-valores = []
-for comunidad, col in columnas.items():
+# --- Preparar datos ---
+data = []
+for comunidad, col in columnas_2010.items():
     if col in df.columns:
-        filtro = df.loc[df['Periodo'] == anio_barras, col]
-        valor = filtro.values[0] if not filtro.empty else None
-    else:
-        valor = None
-    valores.append(valor)
+        valor_2010 = df.loc[df['Periodo'] == 2010, col].values[0] if not df.loc[df['Periodo'] == 2010, col].empty else None
+        valor_actual = df.loc[df['Periodo'] == anio_lollipop, col].values[0] if not df.loc[df['Periodo'] == anio_lollipop, col].empty else None
 
-# --- Construir DataFrame ordenado ---
-df_barras = pd.DataFrame({
-    "CCAA": list(columnas.keys()),
-    etiqueta_valor: valores
-})
-df_barras = df_barras.sort_values(by=etiqueta_valor, ascending=False)
+        if valor_2010 and valor_actual:
+            variacion = ((valor_actual - valor_2010) / valor_2010) * 100
+            data.append({
+                "CCAA": comunidad,
+                "Valor 2010 (€)": valor_2010,
+                f"Valor {anio_lollipop} (€)": valor_actual,
+                "Variación (%)": variacion
+            })
 
-# --- Gráfico de barras con paleta "Plasma" ---
-fig_barras = px.bar(
-    df_barras,
-    x=etiqueta_valor,
-    y="CCAA",
-    orientation="h",
-    color=etiqueta_valor,
-    color_continuous_scale="Plasma",
-    title=titulo,
-    labels={etiqueta_valor: etiqueta_valor, "CCAA": "Comunidad"}
-)
+# --- Crear DataFrame ordenado ---
+import pandas as pd
+df_lollipop = pd.DataFrame(data).sort_values(by="Variación (%)", ascending=False)
 
-fig_barras.update_traces(hovertemplate=f"<b>%{{y}}</b><br>{hover_fmt}<extra></extra>")
-fig_barras.update_layout(
-    xaxis_title=etiqueta_valor,
+# --- Crear gráfico ---
+fig = go.Figure()
+
+# Línea del palito
+fig.add_trace(go.Scatter(
+    x=df_lollipop["Variación (%)"],
+    y=df_lollipop["CCAA"],
+    mode="lines",
+    line=dict(color="lightgray", width=2),
+    hoverinfo="none",
+    showlegend=False
+))
+
+# Punto final (piruleta) con color según signo
+colores = ["#f3722c" if val >= 0 else "#577590" for val in df_lollipop["Variación (%)"]]
+
+fig.add_trace(go.Scatter(
+    x=df_lollipop["Variación (%)"],
+    y=df_lollipop["CCAA"],
+    mode="markers",
+    marker=dict(size=14, color=colores),
+    text=[
+        f"<b>{row['CCAA']}</b><br>"
+        f"🔹 2010: {row['Valor 2010 (€)']:.0f} €<br>"
+        f"🔸 {anio_lollipop}: {row[f'Valor {anio_lollipop} (€)']:.0f} €<br>"
+        f"📈 Variación: {row['Variación (%)']:.2f} %"
+        for _, row in df_lollipop.iterrows()
+    ],
+    hovertemplate="%{text}<extra></extra>",
+    showlegend=False
+))
+
+# --- Estética final ---
+fig.update_layout(
+    title=f"🍭 Variación de Renta desde 2010 por Comunidad Autónoma ({anio_lollipop})",
+    xaxis_title="Variación porcentual respecto a 2010",
     yaxis_title="",
     paper_bgcolor="#0e1117",
     plot_bgcolor="#0e1117",
     font=dict(color="white"),
-    coloraxis_colorbar=dict(title=etiqueta_valor)
+    margin=dict(l=80, r=20, t=60, b=30)
 )
 
-st.plotly_chart(fig_barras, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
