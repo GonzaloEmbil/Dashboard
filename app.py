@@ -203,12 +203,12 @@ import plotly.express as px
 st.markdown("---")
 st.subheader("🗺️ Mapa Interactivo de Renta por Comunidad Autónoma")
 
-# --- Cargar GeoJSON desde fuente externa (Opendatasoft) ---
+# --- Cargar GeoJSON desde fuente fiable (Opendatasoft) ---
 geojson_url = "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/georef-spain-comunidad-autonoma/exports/geojson?lang=es&timezone=Europe%2FMadrid"
 response = requests.get(geojson_url)
 geojson = response.json()
 
-# --- Diccionario para mapear columnas del CSV a nombres del GeoJSON ---
+# --- Diccionario con nombres EXACTOS del GeoJSON ---
 columnas_ccaa = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
@@ -237,13 +237,22 @@ anio_mapa = st.selectbox(
     key="anio_mapa"
 )
 
-# --- Crear DataFrame con los datos de renta por comunidad ---
+# --- Construir DataFrame del mapa ---
 df_mapa = pd.DataFrame({
     "CCAA": list(columnas_ccaa.keys()),
-    "Renta": [df.loc[df['Periodo'] == anio_mapa, col].values[0] for col in columnas_ccaa.values()]
+    "Renta": [df.loc[df['Periodo'] == anio_mapa, col].values[0] if not df.loc[df['Periodo'] == anio_mapa, col].empty else None for col in columnas_ccaa.values()]
 })
 
-# --- Crear mapa coroplético con Plotly Express ---
+# Convertir a numérico y manejar nulos
+df_mapa["Renta"] = pd.to_numeric(df_mapa["Renta"], errors="coerce")
+
+# Mostrar rango real de datos para ajustar cmin/cmax si hace falta
+renta_min = df_mapa["Renta"].min()
+renta_max = df_mapa["Renta"].max()
+st.write("📊 Rango de rentas por CCAA:", f"{renta_min:,.0f} € — {renta_max:,.0f} €")
+st.write(df_mapa)
+
+# --- Crear mapa con Plotly Express ---
 fig_mapa = px.choropleth(
     df_mapa,
     geojson=geojson,
@@ -256,16 +265,22 @@ fig_mapa = px.choropleth(
     title=f"Renta Anual Neta Media por CCAA ({anio_mapa})"
 )
 
-# --- Ajustes visuales para enfocar bien España ---
+# --- Configurar el mapa visualmente ---
 fig_mapa.update_geos(
     visible=False,
     projection_type="mercator",
     center={"lat": 40, "lon": -3.5},
     projection_scale=5
 )
+
+# Ajustar escala solo si el rango tiene sentido
+if renta_min is not None and renta_max is not None and renta_max > renta_min:
+    fig_mapa.update_layout(
+        coloraxis=dict(cmin=renta_min, cmax=renta_max)
+    )
+
 fig_mapa.update_layout(
     coloraxis_colorbar=dict(title="Renta (€)"),
-    coloraxis=dict(cmin=8000, cmax=15000),
     margin={"r": 0, "t": 50, "l": 0, "b": 0},
     paper_bgcolor="#0e1117",
     plot_bgcolor="#0e1117",
