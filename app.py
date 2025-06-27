@@ -210,8 +210,8 @@ with open("ccaa_es.geojson", encoding="utf-8") as f:
 columnas_ccaa = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
-    "Asturias": "RentaAnualNetaMediaAsturias",
-    "Islas Baleares": "RentaAnualNetaMediaBaleares",
+    "Principado de Asturias": "RentaAnualNetaMediaAsturias",
+    "Illes Baleares": "RentaAnualNetaMediaBaleares",
     "Cantabria": "RentaAnualNetaMediaCantabria",
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
     "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamancha",
