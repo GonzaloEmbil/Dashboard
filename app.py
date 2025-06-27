@@ -220,6 +220,11 @@ columnas_ccaa = {
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
     "País Vasco": "RentaAnualNetaMediaPaisVasco",
+    "Comunidad de Madrid": "RentaAnualNetaMediaMadrid",
+    "Región de Murcia": "RentaAnualNetaMediaMurcia",
+    "Comunidad Foral de Navarra": "RentaAnualNetaMediaNavarra",
+    "La Rioja": "RentaAnualNetaMediaRioja",
+    "Canarias": "RentaAnualNetaMediaCanarias"
 }
 
 # --- Selector de año ---
