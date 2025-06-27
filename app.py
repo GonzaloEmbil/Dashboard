@@ -205,10 +205,11 @@ st.subheader("🗺️ Mapa Interactivo de Renta por Comunidad Autónoma")
 # --- Cargar GeoJSON con los límites de las CCAA ---
 with open("ccaa_es.geojson", encoding="utf-8") as f:
     geojson = json.load(f)
-    st.write("🔍 Nombres de CCAA encontrados en el GeoJSON:")
+    st.write("🔎 Estructura de 'properties' en el GeoJSON:")
 for feature in geojson['features']:
-    nombre = feature.get('properties', {}).get('name', '⚠️ (sin nombre)')
-    st.write(repr(nombre))
+    st.write(feature['properties'].keys())
+    break  # con uno solo nos basta para ver la estructura
+
 
 
 # --- Diccionario para mapear columnas a nombres de CCAA ---
