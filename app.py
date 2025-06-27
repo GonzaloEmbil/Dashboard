@@ -196,31 +196,22 @@ st.download_button(
 )
 
 # --------- MAPA COROPLÉTICO FUNCIONAL (sin Ceuta, Melilla, Canarias, Madrid, La Rioja, Navarra, Murcia) ---------
-import plotly.graph_objects as go
+import json
+import plotly.express as px
 
 st.markdown("---")
-st.subheader("🗺️ Mapa Coroplético de la Renta por Comunidad Autónoma")
+st.subheader("🗺️ Mapa Interactivo de Renta por Comunidad Autónoma")
 
-tipo_valor = st.selectbox(
-    "Tipo de dato:",
-    options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
-    index=0,
-    key="vista_mapa"
-)
+# --- Cargar GeoJSON con los límites de las CCAA ---
+with open("ccaa_es.geojson", encoding="utf-8") as f:
+    geojson = json.load(f)
 
-años_disponibles = sorted(df['Periodo'].unique())
-año_seleccionado = st.selectbox(
-    "Selecciona el año:",
-    options=años_disponibles,
-    index=años_disponibles.index(2024) if 2024 in años_disponibles else len(años_disponibles) - 1,
-    key="año_mapa"
-)
-
-columnas_euro = {
+# --- Diccionario para mapear columnas a nombres de CCAA ---
+columnas_ccaa = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
     "Asturias": "RentaAnualNetaMediaAsturias",
-    "Baleares": "RentaAnualNetaMediaBaleares",
+    "Islas Baleares": "RentaAnualNetaMediaBaleares",
     "Cantabria": "RentaAnualNetaMediaCantabria",
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
     "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamancha",
@@ -230,84 +221,40 @@ columnas_euro = {
     "Galicia": "RentaAnualNetaMediaGalicia",
     "País Vasco": "RentaAnualNetaMediaPaisVasco"
 }
-columnas_pct = {k: v + "Base2010" for k, v in columnas_euro.items()}
-columnas_usar = columnas_euro if tipo_valor == "Valores absolutos (€)" else columnas_pct
-titulo_color = "Renta (€)" if tipo_valor == "Valores absolutos (€)" else "Índice (base 2010 = 100)"
-formato_hover = ".0f" if tipo_valor == "Valores absolutos (€)" else ".1f"
 
-df_año = df[df["Periodo"] == año_seleccionado].copy()
-datos_mapa = pd.DataFrame({
-    "Comunidad Autónoma": list(columnas_usar.keys()),
-    "Valor": [df_año[col].values[0] if col in df_año.columns and not df_año[col].isnull().all() else None for col in columnas_usar.values()]
-}).dropna(subset=['Valor'])
+# --- Selector de año ---
+anio_mapa = st.selectbox(
+    "Selecciona el año a visualizar en el mapa:",
+    options=sorted(df['Periodo'].unique()),
+    index=len(df['Periodo'].unique()) - 1,
+    key="anio_mapa"
+)
 
-# GEOJSON limpio (solo comunidades sin problemas)
-geojson_data = {
-    "type": "FeatureCollection",
-    "features": [
-        {"type": "Feature", "properties": {"name": "Andalucía"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 36.0], [-1.5, 36.0], [-1.5, 38.5], [-7.5, 38.5], [-7.5, 36.0]]]}},
-        {"type": "Feature", "properties": {"name": "Aragón"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.5, 40.0], [0.5, 40.0], [0.5, 42.5], [-1.5, 42.5], [-1.5, 40.0]]]}},
-        {"type": "Feature", "properties": {"name": "Asturias"}, "geometry": {"type": "Polygon", "coordinates": [[[-6.5, 43.0], [-4.5, 43.0], [-4.5, 43.8], [-6.5, 43.8], [-6.5, 43.0]]]}},
-        {"type": "Feature", "properties": {"name": "Baleares"}, "geometry": {"type": "Polygon", "coordinates": [[[1.5, 38.5], [4.5, 38.5], [4.5, 40.0], [1.5, 40.0], [1.5, 38.5]]]}},
-        {"type": "Feature", "properties": {"name": "Cantabria"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 42.5], [-3.5, 42.5], [-3.5, 43.5], [-4.5, 43.5], [-4.5, 42.5]]]}},
-        {"type": "Feature", "properties": {"name": "Castilla y León"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.0, 40.0], [-1.0, 40.0], [-1.0, 43.0], [-7.0, 43.0], [-7.0, 40.0]]]}},
-        {"type": "Feature", "properties": {"name": "Castilla-La Mancha"}, "geometry": {"type": "Polygon", "coordinates": [[[-4.5, 38.0], [-1.0, 38.0], [-1.0, 40.5], [-4.5, 40.5], [-4.5, 38.0]]]}},
-        {"type": "Feature", "properties": {"name": "Cataluña"}, "geometry": {"type": "Polygon", "coordinates": [[[0.0, 40.0], [3.5, 40.0], [3.5, 42.5], [0.0, 42.5], [0.0, 40.0]]]}},
-        {"type": "Feature", "properties": {"name": "Comunidad Valenciana"}, "geometry": {"type": "Polygon", "coordinates": [[[-1.0, 37.5], [0.5, 37.5], [0.5, 40.5], [-1.0, 40.5], [-1.0, 37.5]]]}},
-        {"type": "Feature", "properties": {"name": "Extremadura"}, "geometry": {"type": "Polygon", "coordinates": [[[-7.5, 38.0], [-4.0, 38.0], [-4.0, 40.5], [-7.5, 40.5], [-7.5, 38.0]]]}},
-        {"type": "Feature", "properties": {"name": "Galicia"}, "geometry": {"type": "Polygon", "coordinates": [[[-9.0, 41.5], [-6.5, 41.5], [-6.5, 44.0], [-9.0, 44.0], [-9.0, 41.5]]]}},
-        {"type": "Feature", "properties": {"name": "País Vasco"}, "geometry": {"type": "Polygon", "coordinates": [[[-3.0, 42.5], [-1.5, 42.5], [-1.5, 43.5], [-3.0, 43.5], [-3.0, 42.5]]]}}
-    ]
-}
+# --- Crear DataFrame para el mapa ---
+df_mapa = pd.DataFrame({
+    "CCAA": list(columnas_ccaa.keys()),
+    "Renta": [df.loc[df['Periodo'] == anio_mapa, col].values[0] for col in columnas_ccaa.values()]
+})
 
-# Crear figura
-min_val = datos_mapa['Valor'].min()
-max_val = datos_mapa['Valor'].max()
-rango = [min_val - 0.05*(max_val - min_val), max_val + 0.05*(max_val - min_val)]
-
-fig = go.Figure(go.Choropleth(
-    geojson=geojson_data,
-    locations=datos_mapa['Comunidad Autónoma'],
-    z=datos_mapa['Valor'],
+# --- Crear el mapa con Plotly Express ---
+fig_mapa = px.choropleth(
+    df_mapa,
+    geojson=geojson,
+    locations="CCAA",
     featureidkey="properties.name",
-    colorscale='Viridis',
-    marker_line_width=0.5,
-    marker_line_color='white',
-    zmin=rango[0],
-    zmax=rango[1],
-    hovertemplate="<b>%{location}</b><br>Valor: %{z:" + formato_hover + "}<extra></extra>",
-    colorbar=dict(
-        title=dict(text=titulo_color, font=dict(color="white")),
-        tickfont=dict(color="white")
-    )
-))
-
-fig.update_geos(
-    fitbounds="locations",
-    visible=False,
-    showcountries=False,
-    showland=False,
-    showocean=False,
-    bgcolor='rgba(0,0,0,0)'
+    color="Renta",
+    color_continuous_scale="Viridis",
+    labels={"Renta": "Renta (€)"},
+    title=f"Renta Anual Neta Media por CCAA ({anio_mapa})"
 )
 
-fig.update_layout(
-    title=dict(text=f"Renta Anual Neta Media - {año_seleccionado}", font=dict(color="white", size=20)),
-    plot_bgcolor='#0e1117',
+# --- Personalización visual ---
+fig_mapa.update_geos(fitbounds="locations", visible=False)
+fig_mapa.update_layout(
+    margin={"r":0, "t":50, "l":0, "b":0},
     paper_bgcolor='#0e1117',
-    font=dict(color="white", family="Arial"),
-    margin=dict(l=0, r=0, t=60, b=0),
-    height=650
+    plot_bgcolor='#0e1117',
+    font=dict(color="white")
 )
 
-st.plotly_chart(fig, use_container_width=True)
-
-# Botón de descarga
-csv_map = datos_mapa.copy()
-csv_map.insert(0, "Año", año_seleccionado)
-st.download_button(
-    label="⬇️ Descargar datos completos",
-    data=csv_map.to_csv(index=False).encode("utf-8"),
-    file_name="renta_comunidades.csv",
-    mime="text/csv"
-)
+st.plotly_chart(fig_mapa, use_container_width=True)
