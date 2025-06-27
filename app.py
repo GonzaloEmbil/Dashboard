@@ -207,7 +207,9 @@ with open("ccaa_es.geojson", encoding="utf-8") as f:
     geojson = json.load(f)
     st.write("🔍 Nombres de CCAA encontrados en el GeoJSON:")
 for feature in geojson['features']:
-    st.write(repr(feature['properties']['name']))
+    nombre = feature.get('properties', {}).get('name', '⚠️ (sin nombre)')
+    st.write(repr(nombre))
+
 
 # --- Diccionario para mapear columnas a nombres de CCAA ---
 columnas_ccaa = {
