@@ -252,7 +252,7 @@ vista_sexo = st.selectbox(
     options=[
         "Valores absolutos (€)",
         "Variación respecto a 2010 (%)",
-        "Diferencia (Hombres - Mujeres) (€)"
+        "Diferencia entre hombres y mujeres (€)"
     ],
     index=0,
     key="vista_sexo"
