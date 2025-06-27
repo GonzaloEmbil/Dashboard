@@ -21,7 +21,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título principal
-st.title("Dashboard Interactivo para la Renta Anual Neta Media en España")
+st.title("Dashboard Interactivo para la Renta Anual Neta Media en España entre los años 2010 y 2024")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
