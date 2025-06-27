@@ -195,33 +195,36 @@ st.download_button(
     mime='text/csv'
 )
 
+# --- MAPA ---
+
 import requests
 import plotly.express as px
 
 st.markdown("---")
 st.subheader("🗺️ Mapa Interactivo de Renta por Comunidad Autónoma")
 
-# --- Cargar GeoJSON desde URL pública confiable ---
-geojson_url = "https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/spain-autonomous-communities.geojson"
-geojson = requests.get(geojson_url).json()
+# --- Cargar GeoJSON desde fuente externa (Opendatasoft) ---
+geojson_url = "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/georef-spain-comunidad-autonoma/exports/geojson?lang=es&timezone=Europe%2FMadrid"
+response = requests.get(geojson_url)
+geojson = response.json()
 
-# --- Diccionario para mapear columnas a nombres de CCAA (coincide con el GeoJSON online) ---
+# --- Diccionario para mapear columnas del CSV a nombres del GeoJSON ---
 columnas_ccaa = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
     "Principado de Asturias": "RentaAnualNetaMediaAsturias",
-    "Islas Baleares": "RentaAnualNetaMediaBaleares",
+    "Illes Balears": "RentaAnualNetaMediaBaleares",
     "Cantabria": "RentaAnualNetaMediaCantabria",
     "Castilla y León": "RentaAnualNetaMediaCastillayleon",
     "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamancha",
     "Cataluña": "RentaAnualNetaMediaCataluna",
-    "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
+    "Comunitat Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
     "Extremadura": "RentaAnualNetaMediaExtremadura",
     "Galicia": "RentaAnualNetaMediaGalicia",
-    "País Vasco": "RentaAnualNetaMediaPaisVasco",
-    "Madrid": "RentaAnualNetaMediaMadrid",
-    "Murcia": "RentaAnualNetaMediaMurcia",
-    "Navarra": "RentaAnualNetaMediaNavarra",
+    "Euskadi": "RentaAnualNetaMediaPaisVasco",
+    "Comunidad de Madrid": "RentaAnualNetaMediaMadrid",
+    "Región de Murcia": "RentaAnualNetaMediaMurcia",
+    "Comunidad Foral de Navarra": "RentaAnualNetaMediaNavarra",
     "La Rioja": "RentaAnualNetaMediaRioja",
     "Canarias": "RentaAnualNetaMediaCanarias"
 }
@@ -234,22 +237,18 @@ anio_mapa = st.selectbox(
     key="anio_mapa"
 )
 
-# --- Crear DataFrame para el mapa ---
+# --- Crear DataFrame con los datos de renta por comunidad ---
 df_mapa = pd.DataFrame({
     "CCAA": list(columnas_ccaa.keys()),
     "Renta": [df.loc[df['Periodo'] == anio_mapa, col].values[0] for col in columnas_ccaa.values()]
 })
 
-# --- Mostrar tabla para depuración (opcional) ---
-# st.write("📊 Renta por CCAA:")
-# st.write(df_mapa)
-
-# --- Crear el mapa con Plotly Express ---
+# --- Crear mapa coroplético con Plotly Express ---
 fig_mapa = px.choropleth(
     df_mapa,
     geojson=geojson,
     locations="CCAA",
-    featureidkey="properties.name",  # El campo que usa el GeoJSON externo
+    featureidkey="properties.acom_name",
     color="Renta",
     hover_name="CCAA",
     color_continuous_scale="Inferno",
@@ -257,7 +256,7 @@ fig_mapa = px.choropleth(
     title=f"Renta Anual Neta Media por CCAA ({anio_mapa})"
 )
 
-# --- Personalización visual del mapa ---
+# --- Ajustes visuales para enfocar bien España ---
 fig_mapa.update_geos(
     visible=False,
     projection_type="mercator",
