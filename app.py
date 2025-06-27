@@ -209,7 +209,17 @@ with open("ccaa_es.geojson", encoding="utf-8") as f:
 # --- Diccionario para mapear columnas a nombres de CCAA ---
 columnas_ccaa = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
-
+    "Aragón": "RentaAnualNetaMediaAragon",
+    "Principado de Asturias": "RentaAnualNetaMediaAsturias",
+    "Illes Baleares": "RentaAnualNetaMediaBaleares",
+    "Cantabria": "RentaAnualNetaMediaCantabria",
+    "Castilla y León": "RentaAnualNetaMediaCastillayleon",
+    "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamancha",
+    "Cataluña": "RentaAnualNetaMediaCataluna",
+    "Comunidad Valenciana": "RentaAnualNetaMediaComunidadvalenciana",
+    "Extremadura": "RentaAnualNetaMediaExtremadura",
+    "Galicia": "RentaAnualNetaMediaGalicia",
+    "País Vasco": "RentaAnualNetaMediaPaisVasco"
 }
 
 # --- Selector de año ---
