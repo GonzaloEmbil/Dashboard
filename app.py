@@ -222,7 +222,7 @@ columnas_euros = {
     "Canarias": "RentaAnualNetaMediaCanarias"
 }
 
-# --- Diccionario de columnas por comunidad (variación respecto a 2010) ---
+# --- Diccionario de columnas por comunidad (variación % respecto a 2010) ---
 columnas_var = {
     "Andalucía": "RentaAnualNetaMediaAndaluciaBase2010",
     "Aragón": "RentaAnualNetaMediaAragonBase2010",
@@ -258,7 +258,7 @@ anio_barras = st.selectbox(
     key="anio_barras"
 )
 
-# --- Configurar vista seleccionada ---
+# --- Configurar según la vista ---
 if vista == "Valores absolutos (€)":
     columnas = columnas_euros
     etiqueta_valor = "Renta (€)"
@@ -270,24 +270,31 @@ else:
     titulo = f"Variación desde 2010 por CCAA ({anio_barras})"
     hover_fmt = "%{x:.1f} %"
 
-# --- Crear y ordenar DataFrame ---
+# --- Recoger datos con verificación de columnas seguras ---
+valores = []
+for comunidad, col in columnas.items():
+    if col in df.columns:
+        filtro = df.loc[df['Periodo'] == anio_barras, col]
+        valor = filtro.values[0] if not filtro.empty else None
+    else:
+        valor = None
+    valores.append(valor)
+
+# --- Construir DataFrame ordenado ---
 df_barras = pd.DataFrame({
     "CCAA": list(columnas.keys()),
-    etiqueta_valor: [
-        df.loc[df['Periodo'] == anio_barras, col].values[0]
-        for col in columnas.values()
-    ]
+    etiqueta_valor: valores
 })
-df_barras.sort_values(by=etiqueta_valor, ascending=False, inplace=True)
+df_barras = df_barras.sort_values(by=etiqueta_valor, ascending=False)
 
-# --- Gráfico de barras ---
+# --- Gráfico de barras con paleta "Plasma" ---
 fig_barras = px.bar(
     df_barras,
     x=etiqueta_valor,
     y="CCAA",
     orientation="h",
     color=etiqueta_valor,
-    color_continuous_scale="Viridis",
+    color_continuous_scale="Plasma",
     title=titulo,
     labels={etiqueta_valor: etiqueta_valor, "CCAA": "Comunidad"}
 )
