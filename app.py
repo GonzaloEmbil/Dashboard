@@ -201,7 +201,7 @@ import plotly.express as px
 st.markdown("---")
 st.subheader("📊 Comparativa de Renta por Comunidad Autónoma")
 
-# --- Diccionario de columnas por comunidad (valores absolutos) ---
+# --- Diccionario de columnas por comunidad (valores en euros) ---
 columnas_euros = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
     "Aragón": "RentaAnualNetaMediaAragon",
@@ -222,25 +222,43 @@ columnas_euros = {
     "Canarias": "RentaAnualNetaMediaCanarias"
 }
 
-# --- Diccionario equivalente para variación respecto a 2010 ---
-columnas_var = {com: col + "Base2010" for com, col in columnas_euros.items()}
+# --- Diccionario de columnas por comunidad (variación respecto a 2010) ---
+columnas_var = {
+    "Andalucía": "RentaAnualNetaMediaAndaluciaBase2010",
+    "Aragón": "RentaAnualNetaMediaAragonBase2010",
+    "Principado de Asturias": "RentaAnualNetaMediaAsturiasBase2010",
+    "Illes Balears": "RentaAnualNetaMediaBalearesBase2010",
+    "Cantabria": "RentaAnualNetaMediaCantabriaBase2010",
+    "Castilla y León": "RentaAnualNetaMediaCastillayleonBase2010",
+    "Castilla-La Mancha": "RentaAnualNetaMediaCastillalamanchaBase2010",
+    "Cataluña": "RentaAnualNetaMediaCatalunaBase2010",
+    "Comunitat Valenciana": "RentaAnualNetaMediaComunidadvalencianaBase2010",
+    "Extremadura": "RentaAnualNetaMediaExtremaduraBase2010",
+    "Galicia": "RentaAnualNetaMediaGaliciaBase2010",
+    "País Vasco": "RentaAnualNetaMediaPaisVascoBase2010",
+    "Comunidad de Madrid": "RentaAnualNetaMediaMadridBase2010",
+    "Región de Murcia": "RentaAnualNetaMediaMurciaBase2010",
+    "Comunidad Foral de Navarra": "RentaAnualNetaMediaNavarraBase2010",
+    "La Rioja": "RentaAnualNetaMediaRiojaBase2010",
+    "Canarias": "RentaAnualNetaMediaCanariasBase2010"
+}
 
-# --- Selector del tipo de vista ---
+# --- Selector de visualización ---
 vista = st.selectbox(
     "Selecciona el tipo de visualización:",
-    options=["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
+    ["Valores absolutos (€)", "Variación respecto a 2010 (%)"],
     index=0
 )
 
-# --- Selector del año ---
+# --- Selector de año ---
 anio_barras = st.selectbox(
     "Selecciona el año a visualizar:",
-    options=sorted(df['Periodo'].unique()),
+    sorted(df['Periodo'].unique()),
     index=len(df['Periodo'].unique()) - 1,
     key="anio_barras"
 )
 
-# --- Elegir columnas según vista seleccionada ---
+# --- Configurar vista seleccionada ---
 if vista == "Valores absolutos (€)":
     columnas = columnas_euros
     etiqueta_valor = "Renta (€)"
@@ -262,12 +280,12 @@ df_barras = pd.DataFrame({
 })
 df_barras.sort_values(by=etiqueta_valor, ascending=False, inplace=True)
 
-# --- Crear gráfico de barras ordenado ---
+# --- Gráfico de barras ---
 fig_barras = px.bar(
     df_barras,
     x=etiqueta_valor,
     y="CCAA",
-    orientation='h',
+    orientation="h",
     color=etiqueta_valor,
     color_continuous_scale="Viridis",
     title=titulo,
