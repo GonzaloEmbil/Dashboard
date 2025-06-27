@@ -252,7 +252,7 @@ fig_mapa = px.choropleth(
     df_mapa,
     geojson=geojson,
     locations="CCAA",
-    featureidkey="properties.name",
+    featureidkey="properties.acom_name",  # <-- esta es la clave correcta
     color="Renta",
     color_continuous_scale="Viridis",
     labels={"Renta": "Renta (€)"},
