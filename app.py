@@ -319,7 +319,9 @@ else:  # Diferencia (Hombres - Mujeres) en euros
     fig_sexo.add_trace(go.Scatter(
         x=df['Periodo'],
         y=diferencia,
-        mode='lines+markers',
+        mode='lines',
+        fill='tozeroy',  # 👉 Relleno hasta el eje X (cero)
+        fillcolor='rgba(147, 112, 219, 0.3)',  # púrpura semitransparente
         name="Brecha salarial (€)",
         line=dict(color='mediumpurple', width=2),
         hovertemplate="Año: %{x}<br>Diferencia: %{y:,.0f} €<extra></extra>"
