@@ -67,7 +67,7 @@ seleccion = st.multiselect(
 if vista_edad == "Valores absolutos (€)":
     columnas = columnas_valores
     yaxis_title_edad = "Renta (€)"
-    y_range_edad = [7000, 19000]
+    y_range_edad = [6000, 20000]
     hover_fmt_edad = "%{y:,.0f} €"
 else:
     columnas = columnas_porcentaje
