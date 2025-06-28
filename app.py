@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Dashboard de Renta", layout="wide")
+st.set_page_config(page_title="Dashboard Renta Anual Neta Media en España", layout="wide")
 
 # Estilo global en modo oscuro
 st.markdown("""
@@ -21,13 +21,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título principal
-st.title("Dashboard Interactivo para la Renta Anual Neta Media en España entre los años 2010 y 2024")
+st.title("Dashboard para la Renta Anual Neta Media en España entre los años 2010 y 2024")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
 
 # --------- GRÁFICO POR EDAD ---------
-st.subheader("📈 Renta Anual Neta Media por Grupo de Edad")
+st.subheader("Renta anual neta media por grupo de edad")
 
 vista_edad = st.selectbox(
     "Selecciona el tipo de visualización:",
@@ -72,7 +72,7 @@ if vista_edad == "Valores absolutos (€)":
 else:
     columnas = columnas_porcentaje
     yaxis_title_edad = "Variación desde 2010 (%)"
-    y_range_edad = [80, 120]
+    y_range_edad = [75, 150]
     hover_fmt_edad = "%{y:.1f} %"
 
 fig_edad = go.Figure()
@@ -124,7 +124,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 st.markdown("---")
-st.subheader("🍭 Renta anual neta media por Comunidad Autónoma")
+st.subheader("Renta anual neta media por Comunidad Autónoma")
 
 columnas = {
     "Andalucía": "RentaAnualNetaMediaAndalucia",
@@ -220,7 +220,7 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.update_layout(
-    title=f"🍭 Comparación de Renta por Comunidad Autónoma: 2010 vs {anio_destino}",
+    title=f"Comparación de Renta por Comunidad Autónoma: 2010 vs {anio_destino}",
     xaxis_title="Renta (€)",
     yaxis=dict(categoryorder="array", categoryarray=df_lollipop["CCAA"].tolist()),
     paper_bgcolor="#0e1117",
@@ -244,7 +244,7 @@ st.download_button(
 
 # --------- GRÁFICO POR SEXO ---------
 st.markdown("---")
-st.subheader("👥 Evolución de la Brecha Salarial entre Hombres y Mujeres")
+st.subheader("Diferencia en la renta anual neta media entre hombres y mujeres")
 
 # Selector de vista
 vista_sexo = st.selectbox(
