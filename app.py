@@ -72,7 +72,7 @@ if vista_edad == "Valores absolutos (€)":
 else:
     columnas = columnas_porcentaje
     yaxis_title_edad = "Variación desde 2010 (%)"
-    y_range_edad = [50, 150]
+    y_range_edad = [75, 150]
     hover_fmt_edad = "%{y:.1f} %"
 
 fig_edad = go.Figure()
