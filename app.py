@@ -243,15 +243,16 @@ st.download_button(
 )
 
 # --------- GRÁFICO POR SEXO ---------
+# --------- GRÁFICO POR SEXO ---------
 st.markdown("---")
-st.subheader("👥 Renta Anual Neta Media por Sexo")
+st.subheader("👥 Evolución de la Brecha Salarial entre Hombres y Mujeres")
 
+# Selector de vista
 vista_sexo = st.selectbox(
     "Selecciona el tipo de visualización:",
     options=[
-        "Valores absolutos (€)",
-        "Variación respecto a 2010 (%)",
-        "Diferencia entre hombres y mujeres (€)"
+        "Diferencia entre hombres y mujeres (€)",
+        "Variación en la diferencia respecto a 2010 (%)"
     ],
     index=0,
     key="vista_sexo"
@@ -259,79 +260,41 @@ vista_sexo = st.selectbox(
 
 fig_sexo = go.Figure()
 
-if vista_sexo == "Valores absolutos (€)":
-    hombres_col = 'RentaAnualNetaMediaHombres'
-    mujeres_col = 'RentaAnualNetaMediaMujeres'
-    yaxis_title_sexo = "Renta (€)"
-    y_range_sexo = [8000, 18000]
-    
-    fig_sexo.add_trace(go.Scatter(
-        x=df['Periodo'],
-        y=df[hombres_col],
-        mode='lines+markers',
-        name="Hombres",
-        line=dict(color='royalblue', width=2),
-        hovertemplate="Año: %{x}<br>Hombres: %{y:,.0f} €<extra></extra>"
-    ))
+if vista_sexo == "Diferencia entre hombres y mujeres (€)":
+    y_col = "DiferenciaHombresMujeres"
+    yaxis_title = "Diferencia (Hombres - Mujeres) en €"
+    fill_color = 'rgba(147, 112, 219, 0.3)'  # púrpura semitransparente
 
     fig_sexo.add_trace(go.Scatter(
         x=df['Periodo'],
-        y=df[mujeres_col],
-        mode='lines+markers',
-        name="Mujeres",
-        line=dict(color='tomato', width=2),
-        hovertemplate="Año: %{x}<br>Mujeres: %{y:,.0f} €<extra></extra>"
-    ))
-
-elif vista_sexo == "Variación respecto a 2010 (%)":
-    hombres_col = 'RentaAnualNetaMediaHombresBase2010'
-    mujeres_col = 'RentaAnualNetaMediaMujeresBase2010'
-    yaxis_title_sexo = "Variación desde 2010 (%)"
-    y_range_sexo = [80, 120]
-    
-    fig_sexo.add_trace(go.Scatter(
-        x=df['Periodo'],
-        y=df[hombres_col],
-        mode='lines+markers',
-        name="Hombres",
-        line=dict(color='royalblue', width=2),
-        hovertemplate="Año: %{x}<br>Hombres: %{y:.1f} %<extra></extra>"
-    ))
-
-    fig_sexo.add_trace(go.Scatter(
-        x=df['Periodo'],
-        y=df[mujeres_col],
-        mode='lines+markers',
-        name="Mujeres",
-        line=dict(color='tomato', width=2),
-        hovertemplate="Año: %{x}<br>Mujeres: %{y:.1f} %<extra></extra>"
-    ))
-
-else:  # Diferencia (Hombres - Mujeres) en euros
-    hombres_col = 'RentaAnualNetaMediaHombres'
-    mujeres_col = 'RentaAnualNetaMediaMujeres'
-    diferencia = df[hombres_col] - df[mujeres_col]
-    
-    yaxis_title_sexo = "Diferencia (Hombres - Mujeres) en €"
-    y_range_sexo = None  # Deja que se ajuste automáticamente
-
-    fig_sexo.add_trace(go.Scatter(
-        x=df['Periodo'],
-        y=diferencia,
+        y=df[y_col],
         mode='lines',
-        fill='tozeroy',  # 👉 Relleno hasta el eje X (cero)
-        fillcolor='rgba(147, 112, 219, 0.3)',  # púrpura semitransparente
         name="Brecha salarial (€)",
         line=dict(color='mediumpurple', width=2),
+        fill='tozeroy',
+        fillcolor=fill_color,
         hovertemplate="Año: %{x}<br>Diferencia: %{y:,.0f} €<extra></extra>"
     ))
 
-# --- Layout y estilos ---
+elif vista_sexo == "Variación en la diferencia respecto a 2010 (%)":
+    y_col = "DiferenciaHombresMujeresBase2010"
+    yaxis_title = "Variación de la brecha respecto a 2010 (%)"
+
+    fig_sexo.add_trace(go.Scatter(
+        x=df['Periodo'],
+        y=df[y_col],
+        mode='lines+markers',
+        name="Variación (%)",
+        line=dict(color='orange', width=2),
+        hovertemplate="Año: %{x}<br>Variación: %{y:.1f} %<extra></extra>"
+    ))
+
+# Layout del gráfico
 fig_sexo.update_layout(
     xaxis=dict(title="Año", title_font=dict(color="white"), tickfont=dict(color="white"),
                showgrid=True, gridcolor="gray"),
-    yaxis=dict(title=yaxis_title_sexo, title_font=dict(color="white"), tickfont=dict(color="white"),
-               showgrid=True, gridcolor="gray", range=y_range_sexo),
+    yaxis=dict(title=yaxis_title, title_font=dict(color="white"), tickfont=dict(color="white"),
+               showgrid=True, gridcolor="gray"),
     template="none",
     plot_bgcolor='#0e1117',
     paper_bgcolor='#0e1117',
@@ -341,6 +304,7 @@ fig_sexo.update_layout(
     height=500
 )
 
+# Mostrar gráfico
 st.plotly_chart(fig_sexo, use_container_width=True, config={
     "displayModeBar": True,
     "modeBarButtonsToRemove": [
@@ -349,19 +313,12 @@ st.plotly_chart(fig_sexo, use_container_width=True, config={
     "displaylogo": False
 })
 
-# --- Botón de descarga adaptado a la vista seleccionada ---
-if vista_sexo == "Diferencia (Hombres - Mujeres) (€)":
-    df_descarga_sexo = pd.DataFrame({
-        "Periodo": df["Periodo"],
-        "Diferencia (Hombres - Mujeres)": diferencia
-    })
-else:
-    df_descarga_sexo = df[["Periodo", hombres_col, mujeres_col]]
-
+# Botón de descarga CSV
+df_descarga_sexo = df[["Periodo", y_col]]
 csv_sexo = df_descarga_sexo.to_csv(index=False).encode('utf-8')
 st.download_button(
     label="⬇️ Descargar CSV con los datos seleccionados",
     data=csv_sexo,
-    file_name="renta_por_sexo.csv",
+    file_name="brecha_salarial.csv",
     mime='text/csv'
 )
