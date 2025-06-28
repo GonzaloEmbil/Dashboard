@@ -280,7 +280,8 @@ elif vista_sexo == "Variación en la diferencia respecto a 2010 (%)":
     yaxis_title = "Variación de la brecha respecto a 2010 (%)"
 
     x_vals = df["Periodo"]
-    y_vals = df[y_col]
+    # ✅ Convertir porcentaje en texto a float
+    y_vals = pd.to_numeric(df[y_col].str.replace('%', ''), errors='coerce')
 
     y_mayor = [y if y >= 100 else None for y in y_vals]
     y_menor = [y if y < 100 else None for y in y_vals]
