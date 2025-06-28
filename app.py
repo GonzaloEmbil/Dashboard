@@ -251,7 +251,7 @@ st.plotly_chart(fig, use_container_width=True)
 # 👉 Botón de descarga CSV por comunidades
 csv_comunidades = df_lollipop.to_csv(index=False).encode('utf-8')
 st.download_button(
-    label="⬇️ Descargar CSV de comparación por CCAA",
+    label="⬇️ Descargar CSV con los datos seleccionados",
     data=csv_comunidades,
     file_name=f"comparacion_renta_CCAA_2010_vs_{anio_destino}.csv",
     mime='text/csv'
