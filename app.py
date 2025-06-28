@@ -279,57 +279,25 @@ elif vista_sexo == "Variación en la diferencia respecto a 2010 (%)":
     y_col = "DiferenciaHombresMujeresBase2010"
     yaxis_title = "Variación de la brecha respecto a 2010 (%)"
 
-    x_vals = df["Periodo"]
-    # ✅ Convertir porcentaje en texto a float
-    y_vals = pd.to_numeric(df[y_col].str.replace('%', ''), errors='coerce')
-
-    y_mayor = [y if y >= 100 else None for y in y_vals]
-    y_menor = [y if y < 100 else None for y in y_vals]
-
-    # Área para valores ≥ 100% (verde)
     fig_sexo.add_trace(go.Scatter(
-        x=x_vals,
-        y=y_mayor,
-        mode='lines',
-        name="Brecha ↑",
-        line=dict(color='limegreen', width=2),
-        fill='tozeroy',
-        fillcolor='rgba(50, 205, 50, 0.3)',
-        hovertemplate="Año: %{x}<br>Variación: %{y:.1f} %<extra></extra>"
-    ))
-
-    # Área para valores < 100% (rojo)
-    fig_sexo.add_trace(go.Scatter(
-        x=x_vals,
-        y=y_menor,
-        mode='lines',
-        name="Brecha ↓",
-        line=dict(color='crimson', width=2),
-        fill='tozeroy',
-        fillcolor='rgba(220, 20, 60, 0.3)',
+        x=df['Periodo'],
+        y=df[y_col],
+        mode='lines+markers',
+        name="Variación (%)",
+        line=dict(color='orange', width=2),
         hovertemplate="Año: %{x}<br>Variación: %{y:.1f} %<extra></extra>"
     ))
 
     # Línea horizontal de referencia en 100%
     fig_sexo.add_trace(go.Scatter(
-        x=x_vals,
-        y=[100] * len(x_vals),
+        x=df['Periodo'],
+        y=[100] * len(df),
         mode="lines",
         name="Referencia 100%",
         line=dict(color="gray", width=1, dash="dash"),
         hoverinfo="skip",
         showlegend=True
     ))
-
-    # Anotación fija en el margen
-    fig_sexo.add_annotation(
-        xref="paper", x=1.005,
-        y=100,
-        xanchor="left",
-        text="↔ Brecha igual que en 2010",
-        showarrow=False,
-        font=dict(color="gray", size=11)
-    )
 
 # Layout del gráfico
 fig_sexo.update_layout(
