@@ -279,6 +279,16 @@ elif vista_sexo == "Variación en la diferencia respecto a 2010 (%)":
     y_col = "DiferenciaHombresMujeresBase2010"
     yaxis_title = "Variación de la brecha respecto a 2010 (%)"
 
+    # Línea blanca de referencia en 100% (por encima del grid, debajo de la línea naranja)
+    fig_sexo.add_shape(
+        type="line",
+        xref="paper", x0=0, x1=1,
+        yref="y", y0=100, y1=100,
+        line=dict(color="white", width=4),
+        layer="below"
+    )
+
+    # Línea naranja de variación (por encima de la línea blanca)
     fig_sexo.add_trace(go.Scatter(
         x=df['Periodo'],
         y=df[y_col],
@@ -287,15 +297,6 @@ elif vista_sexo == "Variación en la diferencia respecto a 2010 (%)":
         line=dict(color='orange', width=2),
         hovertemplate="Año: %{x}<br>Variación: %{y:.1f} %<extra></extra>"
     ))
-
-    # Línea horizontal de referencia en 100% (más gruesa, blanca, sin anotación)
-    fig_sexo.add_shape(
-        type="line",
-        xref="paper", x0=0, x1=1,
-        yref="y", y0=100, y1=100,
-        line=dict(color="white", width=4),
-        layer="above"
-    )
 
 # Layout del gráfico
 fig_sexo.update_layout(
