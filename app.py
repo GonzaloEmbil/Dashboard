@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Dashboard Renta Anual Neta Media en España", layout="wide")
 
-# Estilo global en modo oscuro
 st.markdown("""
     <style>
     body {
@@ -21,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título principal
-st.title("Dashboard para la Renta Anual Neta Media en España entre los años 2010 y 2024")
+st.title("Dashboard para la Renta Anual Neta Media en España 2010-2024")
 
 # Cargar datos
 df = pd.read_csv('Rentas.csv', sep=';')
@@ -277,7 +276,7 @@ fig_sexo = go.Figure()
 if vista_sexo == "Diferencia entre hombres y mujeres (€)":
     y_col = "DiferenciaHombresMujeres"
     yaxis_title = "Diferencia (Hombres - Mujeres) en €"
-    fill_color = 'rgba(147, 112, 219, 0.3)'  # púrpura semitransparente
+    fill_color = 'rgba(147, 112, 219, 0.3)'
 
     fig_sexo.add_trace(go.Scatter(
         x=df['Periodo'],
@@ -294,7 +293,6 @@ elif vista_sexo == "Variación en la diferencia respecto a 2010 (%)":
     y_col = "DiferenciaHombresMujeresBase2010"
     yaxis_title = "Variación de la brecha respecto a 2010 (%)"
 
-    # Línea blanca de referencia en 100% (por encima del grid, debajo de la línea naranja)
     fig_sexo.add_shape(
         type="line",
         xref="paper", x0=0, x1=1,
@@ -303,7 +301,6 @@ elif vista_sexo == "Variación en la diferencia respecto a 2010 (%)":
         layer="below"
     )
 
-    # Línea naranja de variación (por encima de la línea blanca)
     fig_sexo.add_trace(go.Scatter(
         x=df['Periodo'],
         y=df[y_col],
