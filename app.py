@@ -77,6 +77,17 @@ else:
 
 fig_edad = go.Figure()
 
+# Añadir línea de referencia en 100% si corresponde
+if vista_edad == "Variación respecto a 2010 (%)":
+    fig_edad.add_shape(
+        type="line",
+        xref="paper", x0=0, x1=1,
+        yref="y", y0=100, y1=100,
+        line=dict(color="white", width=4),
+        layer="below"
+    )
+
+# Añadir trazas por grupo de edad
 for grupo in seleccion:
     col = columnas[grupo]
     fig_edad.add_trace(go.Scatter(
@@ -88,6 +99,7 @@ for grupo in seleccion:
         hovertemplate=f"<b>{grupo}</b><br>Año: %{{x}}<br>Valor: {hover_fmt_edad}<extra></extra>"
     ))
 
+# Layout
 fig_edad.update_layout(
     xaxis=dict(title="Año", title_font=dict(color="white"), tickfont=dict(color="white"),
                showgrid=True, gridcolor="gray"),
@@ -102,6 +114,7 @@ fig_edad.update_layout(
     height=550
 )
 
+# Mostrar gráfico
 st.plotly_chart(fig_edad, use_container_width=True, config={
     "displayModeBar": True,
     "modeBarButtonsToRemove": [
@@ -110,6 +123,7 @@ st.plotly_chart(fig_edad, use_container_width=True, config={
     "displaylogo": False
 })
 
+# Botón de descarga
 df_descarga_edad = df[['Periodo'] + [columnas[grupo] for grupo in seleccion]]
 csv_edad = df_descarga_edad.to_csv(index=False).encode('utf-8')
 st.download_button(
@@ -118,6 +132,7 @@ st.download_button(
     file_name="renta_por_edad.csv",
     mime='text/csv'
 )
+
 
 # --------- GRÁFICO POR COMUNIDADES ---------
 import pandas as pd
