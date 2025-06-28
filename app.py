@@ -288,23 +288,13 @@ elif vista_sexo == "Variación en la diferencia respecto a 2010 (%)":
         hovertemplate="Año: %{x}<br>Variación: %{y:.1f} %<extra></extra>"
     ))
 
-    # Línea horizontal de referencia en 100% (como shape)
+    # Línea horizontal de referencia en 100% (más gruesa, blanca, sin anotación)
     fig_sexo.add_shape(
         type="line",
         xref="paper", x0=0, x1=1,
         yref="y", y0=100, y1=100,
-        line=dict(color="gray", width=3),
+        line=dict(color="white", width=4),
         layer="above"
-    )
-
-    # Anotación lateral para la línea de referencia
-    fig_sexo.add_annotation(
-        xref="paper", x=1.005,
-        y=100,
-        xanchor="left",
-        text="↔ Brecha igual que en 2010",
-        showarrow=False,
-        font=dict(color="gray", size=11)
     )
 
 # Layout del gráfico
